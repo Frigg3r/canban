@@ -1,13 +1,14 @@
 import { Box, Center, Grid, Loader, Text } from '@mantine/core';
 import { useEffect, useState } from 'react';
 import { kanbanApi } from '../../api/kanban';
-import type { KanbanStatus, KanbanTask } from '../../types/kanban';
+import type { CreateTaskPayload, KanbanStatus, KanbanTask } from '../../types/kanban';
 import KanbanColumn from '../KanbanColumn/KanbanColumn';
 import TaskCard from '../TaskCard/TaskCard';
 import styles from './KanbanBoard.module.css';
 import KanbanHeader from '../KanbanHeader/KanbanHeader';
+import { notifications } from '@mantine/notifications';
 import KanbanActions from '../KanbanActions/KanbanActions';
-import CreateTaskModal, { type CreateTaskFormValues } from '../CreateTaskModal/CreateTaskModal';
+import CreateTaskModal from '../CreateTaskModal/CreateTaskModal';
 
 // порядок ui-колонок для отображения столбцов (уже в нужном порядке)
 const boardColumns: KanbanStatus[] = ['backlog', 'inProgress', 'review', 'done'];
@@ -47,8 +48,27 @@ export default function KanbanBoard() {
   };
 
   // обработчик отправки формы создания карточки
-  const handleCreateTaskSubmit = (values: CreateTaskFormValues) => {
-    console.log('Данные новой карточки:', values);
+  const handleCreateTaskSubmit = async (values: CreateTaskPayload) => {
+    try {
+      const createdTask = await kanbanApi.createTask(values);
+
+      setTasks((prev) => [createdTask, ...prev]);
+      setCreateTaskOpened(false);
+
+      notifications.show({
+        title: 'Успешно',
+        message: 'Задача создана',
+        autoClose: 2000,
+        color: 'violet',
+      });
+    } catch (err) {
+      console.error('Ошибка создания карточки:', err);
+
+      notifications.show({
+        title: 'Ошибка',
+        message: 'Не удалось создать задачу',
+      });
+    }
   };
 
   // группируем задачи по статусам для отображения в колонках
@@ -88,9 +108,7 @@ export default function KanbanBoard() {
         onCreateTaskClick={openCreateTaskModal}
       />
 
-      {/* компонент mantine - для сетки */}
       <Grid gutter="md" align="stretch">
-        {/* первый map - создает колонки, второй map - создает карточки внутри колонок*/}
         {boardColumns.map((status) => (
           <Grid.Col key={status} span={{ base: 12, md: 6, lg: 3 }}>
             <KanbanColumn

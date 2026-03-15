@@ -11,9 +11,25 @@ export default function KanbanActions({
 }: KanbanActionsProps) {
   return (
     <Group justify="flex-start" mb="md">
-      {/* флаг оставил сразу, чтобы потом легко скрыть кнопку по роли */}
       {canCreateTask && (
-        <Button radius="xl" onClick={onCreateTaskClick}>
+        <Button
+          variant="outline"
+          color="violet"
+          radius="md"
+          size="sm"
+          onClick={onCreateTaskClick}
+          styles={{
+            root: {
+              backgroundColor: 'rgba(255, 255, 255, 0.75)',
+              borderWidth: '1.5px',
+              fontWeight: 600,
+              paddingInline: '14px',
+            },
+            label: {
+              color: '#111827',
+            },
+          }}
+        >
           Добавить карточку
         </Button>
       )}

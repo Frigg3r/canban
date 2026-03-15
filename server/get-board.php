@@ -62,15 +62,6 @@ $query = "
 $data = $pg_db->Query($query, true);
 $pg_db->Close();
 
-if ($data === false) {
-    http_response_code(500);
-    echo json_encode([
-        "ok" => false,
-        "message" => "Ошибка получения задач"
-    ], JSON_UNESCAPED_UNICODE);
-    exit;
-}
-
 echo json_encode([
     "ok" => true,
     "data" => $data

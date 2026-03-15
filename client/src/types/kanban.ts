@@ -11,3 +11,11 @@ export interface KanbanTask {
   participants_count: number;
   board_status: KanbanStatus;
 }
+
+export interface CreateTaskPayload {
+  name: string;
+  description: string;
+  score: number;
+  quota: number;
+  deadline: string;
+}

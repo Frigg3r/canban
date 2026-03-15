@@ -5,7 +5,7 @@ export class BaseApi {
     this.baseUrl = baseUrl;
   }
 
-  // может вернуть любой тип, path - кусок адреса, options - доп настройки для fetch
+  // может вернуть любой тип (<T>), path - кусок адреса, options - доп настройки для fetch
   protected async request<T>(path: string, options: RequestInit = {}): Promise<T> {
     const response = await fetch(`${this.baseUrl}${path}`, {
       ...options,
