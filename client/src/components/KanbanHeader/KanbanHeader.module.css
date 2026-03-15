@@ -1,0 +1,26 @@
+.header {
+  margin-bottom: 20px;
+  padding: 18px 20px;
+  border: 1px solid rgba(206, 212, 218, 0.7);
+  border-radius: 24px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.92) 0%,
+    rgba(255, 255, 255, 0.78) 100%
+  );
+  backdrop-filter: blur(10px);
+  box-shadow: 0 10px 30px rgba(31, 41, 55, 0.06);
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1.1;
+  color: #111827;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: #6b7280;
+  line-height: 1.3;
+}
