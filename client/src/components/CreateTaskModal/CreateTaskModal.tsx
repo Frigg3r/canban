@@ -112,7 +112,7 @@ export default function CreateTaskModal({
           />
 
           <NumberInput
-            label="Квота"
+            label="Квота участников"
             value={quota}
             onChange={setQuota}
             min={1}
