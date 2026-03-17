@@ -1,14 +1,17 @@
-import { Box, Center, Grid, Loader, Text } from '@mantine/core';
 import { useEffect, useState } from 'react';
+import { Box, Center, Grid, Loader, Text } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import { kanbanApi } from '../../api/kanban';
 import type { CreateTaskPayload, KanbanStatus, KanbanTask } from '../../types/kanban';
+
+import KanbanHeader from '../KanbanHeader/KanbanHeader';
+import KanbanActions from '../KanbanActions/KanbanActions';
+import styles from './KanbanBoard.module.css';
 import KanbanColumn from '../KanbanColumn/KanbanColumn';
 import TaskCard from '../TaskCard/TaskCard';
-import styles from './KanbanBoard.module.css';
-import KanbanHeader from '../KanbanHeader/KanbanHeader';
-import { notifications } from '@mantine/notifications';
-import KanbanActions from '../KanbanActions/KanbanActions';
+
 import CreateTaskModal from '../CreateTaskModal/CreateTaskModal';
+import TaskDetailsModal from '../TaskDetailsModal/TaskDetailsModal';
 
 // порядок ui-колонок для отображения столбцов (уже в нужном порядке)
 const boardColumns: KanbanStatus[] = ['backlog', 'inProgress', 'review', 'done'];
@@ -17,7 +20,11 @@ export default function KanbanBoard() {
   const [tasks, setTasks] = useState<KanbanTask[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
+
   const [createTaskOpened, setCreateTaskOpened] = useState(false);
+  const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
+  const [selectedTeamId, setSelectedTeamId] = useState<number | null>(null);
+  const [taskDetailsOpened, setTaskDetailsOpened] = useState(false);
 
   // пока создание задачи разрешено всем
   const canCreateTask = true;
@@ -45,6 +52,18 @@ export default function KanbanBoard() {
 
   const closeCreateTaskModal = () => {
     setCreateTaskOpened(false);
+  };
+
+  const openTaskDetailsModal = (task: KanbanTask) => {
+    setSelectedTaskId(task.id);
+    setSelectedTeamId(task.team_id);
+    setTaskDetailsOpened(true);
+  };
+
+  const closeTaskDetailsModal = () => {
+    setTaskDetailsOpened(false);
+    setSelectedTaskId(null);
+    setSelectedTeamId(null);
   };
 
   // обработчик отправки формы создания карточки
@@ -117,7 +136,11 @@ export default function KanbanBoard() {
             >
               {groupedTasks[status].length > 0 ? (
                 groupedTasks[status].map((task) => (
-                  <TaskCard key={task.id} task={task} />
+                  <TaskCard 
+                    key={task.id} 
+                    task={task}
+                    onClick={() => openTaskDetailsModal(task)}
+                  />
                 ))
               ) : (
                 <Text size="sm" c="dimmed">
@@ -133,6 +156,13 @@ export default function KanbanBoard() {
         opened={createTaskOpened}
         onClose={closeCreateTaskModal}
         onSubmit={handleCreateTaskSubmit}
+      />
+
+      <TaskDetailsModal
+        opened={taskDetailsOpened}
+        taskId={selectedTaskId}
+        teamId={selectedTeamId}
+        onClose={closeTaskDetailsModal}
       />
     </Box>
   );

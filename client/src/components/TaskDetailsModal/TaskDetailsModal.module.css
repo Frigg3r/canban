@@ -1,0 +1,22 @@
+.heroCard {
+  background: linear-gradient(135deg, #f6f1ff 0%, #ffffff 100%);
+  border: 1px solid #ece5ff;
+}
+
+.descriptionText {
+  line-height: 1.6;
+}
+
+.commentCard {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: #ebe7ff;
+}
+
+.commentMeta {
+  flex: 1;
+}
+
+.commentText {
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
