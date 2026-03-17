@@ -24,7 +24,7 @@ import {
 import { notifications } from '@mantine/notifications';
 import { kanbanApi } from '../../api/kanban';
 // to do: проверить почему не используется KanbanTeamDetails
-import type { KanbanComment, KanbanTaskDetails, KanbanTeamDetails } from '../../types/kanban';
+import type { KanbanComment, KanbanTaskDetails } from '../../types/kanban';
 
 import styles from './TaskDetailsModal.module.css';
 

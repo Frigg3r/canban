@@ -1,6 +1,5 @@
 import { Badge, Group, Paper, Text, ThemeIcon } from '@mantine/core';
 import { IconAlertCircle, IconCalendar, IconFlame, IconUsers } from '@tabler/icons-react';
-import type { KeyboardEvent } from 'react';
 import type { KanbanStatus, KanbanTask } from '../../types/kanban';
 
 interface TaskCardProps {
