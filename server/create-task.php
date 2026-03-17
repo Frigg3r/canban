@@ -15,7 +15,7 @@ if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
     exit;
 }
 
-require_once(__DIR__ . '/pg.connect.php');
+require_once(__DIR__ . '/utils/pg.connect.php');
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $_POST = json_decode(file_get_contents("php://input"), true);

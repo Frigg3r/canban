@@ -18,20 +18,28 @@ if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
     exit;
 }
 
-require_once(__DIR__ . '/pg.connect.php');
+require_once(__DIR__ . '/utils/pg.connect.php');
 
 $query = "
     with team_info as (
-        select
+        select distinct on (ct.task_id)
             ct.task_id,
-            max(ct.status_id) as team_status_id,
-            count(cut.tab_num) as participants_count
+            ct.id as team_id,
+            ct.status_id as team_status_id,
+            (
+                select count(*)
+                from canban.canban_user_team cut
+                where cut.team_id = ct.id
+            ) as participants_count
         from canban.canban_team ct
-        left join canban.canban_user_team cut on cut.team_id = ct.id
-        group by ct.task_id
+        order by ct.task_id, ct.id desc
     )
     select
         t.id,
+        case
+            when t.status_id = 1 then null
+            else ti.team_id
+        end as team_id,
         t.name,
         coalesce(t.description, '') as description,
         coalesce(t.score, 0) as score,
