@@ -82,3 +82,11 @@ export interface RemoveUserFromTeamPayload {
   team_id: number;
   tab_num: number;
 }
+
+export interface KanbanCurrentUser {
+  tab_num: number;
+  fio: string;
+  email: string;
+  role_id: number;
+  role_name: string;
+}

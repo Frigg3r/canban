@@ -8,7 +8,8 @@ import type {
   TakeTaskPayload,
   AddUserToTeamPayload,
   KanbanAvailableUser,
-  RemoveUserFromTeamPayload
+  RemoveUserFromTeamPayload,
+  KanbanCurrentUser
 } from '../types/kanban';
 
 // to do: можно типизировать ответ сервера, пока не делал, 
@@ -173,6 +174,17 @@ class KanbanApi extends BaseApi {
     if (!result.ok) {
       throw new Error(result.message || 'Не удалось изменить статус команды');
     }
+  }
+
+  // получение текущего пользователя по табельному номеру
+  async getCurrentUser(tabNum: number): Promise<KanbanCurrentUser> {
+    const result = await this.request<any>(`/get-current-user.php?tab_num=${tabNum}`);
+
+    if (!result.ok) {
+      throw new Error(result.message || 'Не удалось загрузить текущего пользователя');
+    }
+
+    return result.data;
   }
 }
 

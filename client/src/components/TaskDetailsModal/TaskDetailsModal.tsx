@@ -33,6 +33,8 @@ import type {
 
 import styles from './TaskDetailsModal.module.css';
 
+import { useAppAuth } from '../../App';
+
 interface TaskDetailsModalProps {
   opened: boolean;
   taskId: number | null;
@@ -80,6 +82,8 @@ export default function TaskDetailsModal({
   const [selectedUserTabNum, setSelectedUserTabNum] = useState<string | null>(null);
   const [archiving, setArchiving] = useState(false);
 
+  const { currentUser } = useAppAuth();
+
   const loadTaskDetails = async () => {
     if (taskId == null) return;
 
@@ -126,8 +130,6 @@ export default function TaskDetailsModal({
   }, [opened]);
 
   const isBacklogView = teamId == null;
-  const canArchiveTask =
-    taskDetails?.board_status === 'backlog' || taskDetails?.board_status === 'done';
 
   const currentTeam = (() => {
     if (!taskDetails || isBacklogView) {
@@ -140,7 +142,21 @@ export default function TaskDetailsModal({
   const currentStatusKey = currentTeam?.status ?? taskDetails?.board_status ?? 'backlog';
   const currentStatusColor = statusColor[currentStatusKey] || 'gray';
 
-  const canEditTeam = !isBacklogView && currentTeam?.status === 'inProgress';
+  const canArchiveTask =
+    (currentUser.role_name === 'Руководитель' ||
+      currentUser.role_name === 'Администратор') &&
+    (
+      currentStatusKey === 'backlog' ||
+      currentStatusKey === 'done'
+    );
+
+  const canEditTeam =
+    !isBacklogView &&
+    currentTeam?.status === 'inProgress' &&
+    (
+      currentUser.role_name === 'Руководитель' ||
+      currentUser.role_name === 'Администратор'
+    );
 
   const trimmedComment = commentText.trim();
   const canSubmitComment = Boolean(currentTeam && trimmedComment && !commentLoading);
@@ -154,7 +170,7 @@ export default function TaskDetailsModal({
       const createdComment = await kanbanApi.addComment({
         team_id: currentTeam.id,
         text: trimmedComment,
-        author_tab_num: 1002,
+        author_tab_num: currentUser.tab_num,
       });
 
       setTaskDetails((prev) => {

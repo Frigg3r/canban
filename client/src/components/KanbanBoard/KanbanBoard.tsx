@@ -13,6 +13,8 @@ import TaskCard from '../TaskCard/TaskCard';
 import CreateTaskModal from '../CreateTaskModal/CreateTaskModal';
 import TaskDetailsModal from '../TaskDetailsModal/TaskDetailsModal';
 
+import { useAppAuth } from '../../App';
+
 // порядок ui-колонок для отображения столбцов (уже в нужном порядке)
 const boardColumns: KanbanStatus[] = ['backlog', 'inProgress', 'review', 'done'];
 
@@ -28,8 +30,12 @@ export default function KanbanBoard() {
   const [draggedTask, setDraggedTask] = useState<KanbanTask | null>(null);
   const [isDroppingTask, setIsDroppingTask] = useState(false);
 
+  const { currentUser } = useAppAuth();
+
   // пока создание задачи разрешено всем
-  const canCreateTask = true;
+  const canCreateTask =
+    currentUser.role_name === 'Руководитель' ||
+    currentUser.role_name === 'Администратор';
 
   // вынес загрузку доски в отдельную функцию,
   // чтобы потом можно было переиспользовать ее после действий:
@@ -210,7 +216,7 @@ export default function KanbanBoard() {
       if (draggedTask.board_status === 'backlog' && targetStatus === 'inProgress') {
         await kanbanApi.takeTask({
           task_id: draggedTask.id,
-          participants: [1003],
+          participants: [currentUser.tab_num],
         });
 
         await loadTasks();
