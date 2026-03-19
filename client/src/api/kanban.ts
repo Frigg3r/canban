@@ -1,10 +1,14 @@
 import { BaseApi } from './ApiClass';
-import type { 
-  CreateTaskPayload, 
+import type {
+  CreateTaskPayload,
   KanbanTask,
   AddCommentPayload,
   KanbanComment,
-  KanbanTaskDetails
+  KanbanTaskDetails,
+  TakeTaskPayload,
+  AddUserToTeamPayload,
+  KanbanAvailableUser,
+  RemoveUserFromTeamPayload
 } from '../types/kanban';
 
 // to do: можно типизировать ответ сервера, пока не делал, 
@@ -81,6 +85,93 @@ class KanbanApi extends BaseApi {
 
     if (!result.ok) {
       throw new Error(result.message || 'Не удалось удалить комментарий');
+    }
+  }
+
+  // взятие задачи в работу
+  async takeTask(payload: TakeTaskPayload): Promise<any> {
+    const result = await this.request<any>('/take-task.php', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+
+    if (!result.ok) {
+      throw new Error(result.message || 'Не удалось взять задачу в работу');
+    }
+
+    return result.data;
+  }
+
+  // добавление пользователя в команду
+  async addUserToTeam(payload: AddUserToTeamPayload): Promise<void> {
+    const result = await this.request<any>('/add-user-to-team.php', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+
+    if (!result.ok) {
+      throw new Error(result.message || 'Не удалось добавить сотрудника в команду');
+    }
+  }
+
+  // метод проверки наличия у добавляемого сотрудника в команду текущей задачи
+  async getAvailableUsers(taskId: number): Promise<KanbanAvailableUser[]> {
+    const result = await this.request<any>(`/get-available-users.php?task_id=${taskId}`);
+
+    if (!result.ok) {
+      throw new Error(result.message || 'Не удалось загрузить список сотрудников');
+    }
+
+    return result.data;
+  }
+
+  // удаление сотрудника из команды
+  async removeUserFromTeam(payload: RemoveUserFromTeamPayload): Promise<void> {
+    const result = await this.request<any>('/remove-user-from-team.php', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+
+    if (!result.ok) {
+      throw new Error(result.message || 'Не удалось удалить сотрудника из команды');
+    }
+  }
+
+  // архивирование задачи
+  async archiveTask(taskId: number): Promise<void> {
+    const result = await this.request<any>('/archive-task.php', {
+      method: 'POST',
+      body: JSON.stringify({
+        task_id: taskId,
+      }),
+    });
+
+    if (!result.ok) {
+      throw new Error(result.message || 'Не удалось архивировать задачу');
+    }
+  }
+
+  // возврат карточки в бэклог
+  async returnTaskToBacklog(payload: { task_id: number; team_id: number }): Promise<void> {
+    const result = await this.request<any>('/return-task-to-backlog.php', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+
+    if (!result.ok) {
+      throw new Error(result.message || 'Не удалось вернуть задачу в бэклог');
+    }
+  }
+
+  // метод для изменения статуса (кроме Бэклог -> В работе)
+  async changeTeamStatus(payload: { team_id: number; status: 'inProgress' | 'review' | 'done' }): Promise<void> {
+    const result = await this.request<any>('/change-team-status.php', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+
+    if (!result.ok) {
+      throw new Error(result.message || 'Не удалось изменить статус команды');
     }
   }
 }

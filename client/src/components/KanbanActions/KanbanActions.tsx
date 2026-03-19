@@ -13,20 +13,18 @@ export default function KanbanActions({
     <Group justify="flex-start" mb="md">
       {canCreateTask && (
         <Button
-          variant="outline"
           color="violet"
           radius="md"
           size="sm"
           onClick={onCreateTaskClick}
           styles={{
             root: {
-              backgroundColor: 'rgba(255, 255, 255, 0.75)',
-              borderWidth: '1.5px',
+              backgroundColor: '#7950F2',
               fontWeight: 600,
               paddingInline: '14px',
             },
             label: {
-              color: '#111827',
+              color: '#ffffff',
             },
           }}
         >

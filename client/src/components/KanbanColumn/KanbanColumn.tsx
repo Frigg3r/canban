@@ -1,13 +1,14 @@
 import { Group, Paper, Stack, Text, ThemeIcon } from '@mantine/core';
 import { IconDots } from '@tabler/icons-react';
-import type { ReactNode } from 'react';
+import type { ReactNode, DragEvent } from 'react';
 import type { KanbanStatus } from '../../types/kanban';
 import styles from './KanbanColumn.module.css';
 
 interface KanbanColumnProps {
   status: KanbanStatus;
   count: number;
-  children: ReactNode; // для карточек задач внутри колонки (дочерние элементы)
+  children: ReactNode;
+  onDropTask?: (targetStatus: KanbanStatus) => void;
 }
 
 const statusMeta: Record<KanbanStatus, { title: string; color: string }> = {
@@ -34,6 +35,7 @@ export default function KanbanColumn({
   status,
   count,
   children,
+  onDropTask,
 }: KanbanColumnProps) {
   const meta = statusMeta[status];
 
@@ -44,6 +46,10 @@ export default function KanbanColumn({
       p="md"
       withBorder
       className={styles.column}
+      onDragOver={(event: DragEvent<HTMLDivElement>) => {
+        event.preventDefault();
+      }}
+      onDrop={() => onDropTask?.(status)}
       style={{
         borderTop: `8px solid var(--mantine-color-${meta.color}-6)`,
       }}

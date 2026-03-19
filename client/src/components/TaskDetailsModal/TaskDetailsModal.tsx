@@ -12,8 +12,10 @@ import {
   Text,
   Textarea,
   ThemeIcon,
+  Select,
 } from '@mantine/core';
 import {
+  IconArchive,
   IconCalendar,
   IconChecklist,
   IconMessageCircle,
@@ -23,8 +25,11 @@ import {
 } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { kanbanApi } from '../../api/kanban';
-// to do: проверить почему не используется KanbanTeamDetails
-import type { KanbanComment, KanbanTaskDetails } from '../../types/kanban';
+import type {
+  KanbanComment,
+  KanbanTaskDetails,
+  KanbanAvailableUser,
+} from '../../types/kanban';
 
 import styles from './TaskDetailsModal.module.css';
 
@@ -33,6 +38,12 @@ interface TaskDetailsModalProps {
   taskId: number | null;
   teamId: number | null;
   onClose: () => void;
+  onTaskTeamChanged: (payload: {
+    taskId: number;
+    teamId: number | null;
+    participantsCount: number;
+  }) => void;
+  onTaskArchived: (taskId: number) => void;
 }
 
 const statusLabel: Record<string, string> = {
@@ -54,56 +65,82 @@ export default function TaskDetailsModal({
   taskId,
   teamId,
   onClose,
+  onTaskTeamChanged,
+  onTaskArchived
 }: TaskDetailsModalProps) {
   const [taskDetails, setTaskDetails] = useState<KanbanTaskDetails | null>(null);
   const [loading, setLoading] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [commentLoading, setCommentLoading] = useState(false);
   const [deletingCommentId, setDeletingCommentId] = useState<number | null>(null);
+  const [addingParticipant, setAddingParticipant] = useState(false);
+  const [removingParticipantTabNum, setRemovingParticipantTabNum] = useState<number | null>(null);
+
+  const [availableUsers, setAvailableUsers] = useState<KanbanAvailableUser[]>([]);
+  const [selectedUserTabNum, setSelectedUserTabNum] = useState<string | null>(null);
+  const [archiving, setArchiving] = useState(false);
+
+  const loadTaskDetails = async () => {
+    if (taskId == null) return;
+
+    try {
+      setLoading(true);
+      const data = await kanbanApi.getTaskDetails(taskId, teamId);
+      setTaskDetails(data);
+    } catch (error) {
+      console.error('Ошибка загрузки карточки:', error);
+      notifications.show({
+        title: 'Ошибка',
+        message: 'Не удалось загрузить данные карточки',
+        color: 'red',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadAvailableUsers = async () => {
+    if (taskId == null) return;
+
+    try {
+      const data = await kanbanApi.getAvailableUsers(taskId);
+      setAvailableUsers(data);
+    } catch (error) {
+      console.error('Ошибка загрузки сотрудников:', error);
+    }
+  };
 
   useEffect(() => {
     if (!opened || taskId == null) return;
-
-    const loadTaskDetails = async () => {
-      try {
-        setLoading(true);
-        const data = await kanbanApi.getTaskDetails(taskId, teamId);
-        setTaskDetails(data);
-      } catch (error) {
-        console.error('Ошибка загрузки карточки:', error);
-        notifications.show({
-          title: 'Ошибка',
-          message: 'Не удалось загрузить данные карточки',
-          color: 'red',
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadTaskDetails();
+    loadAvailableUsers();
   }, [opened, taskId, teamId]);
 
-  // закрытие модалки
   useEffect(() => {
     if (!opened) {
       setTaskDetails(null);
       setCommentText('');
+      setAvailableUsers([]);
+      setSelectedUserTabNum(null);
     }
   }, [opened]);
 
-  // вычисление команды, если статус не бэклог
+  const isBacklogView = teamId == null;
+  const canArchiveTask =
+    taskDetails?.board_status === 'backlog' || taskDetails?.board_status === 'done';
+
   const currentTeam = (() => {
-    if (!taskDetails || taskDetails.board_status === 'backlog') {
+    if (!taskDetails || isBacklogView) {
       return null;
     }
 
-    if (teamId == null) {
-      return taskDetails.teams[0] ?? null;
-    }
-    // поиск по переданному teamId в пропсах
     return taskDetails.teams.find((team) => Number(team.id) === Number(teamId)) ?? null;
   })();
+
+  const currentStatusKey = currentTeam?.status ?? taskDetails?.board_status ?? 'backlog';
+  const currentStatusColor = statusColor[currentStatusKey] || 'gray';
+
+  const canEditTeam = !isBacklogView && currentTeam?.status === 'inProgress';
 
   const trimmedComment = commentText.trim();
   const canSubmitComment = Boolean(currentTeam && trimmedComment && !commentLoading);
@@ -124,13 +161,9 @@ export default function TaskDetailsModal({
         if (!prev) return prev;
 
         return {
-          // старые значения
           ...prev,
-          // меняем только teams
           teams: prev.teams.map((team) =>
-            // находим текущую команду
             team.id === currentTeam.id
-              // для нее меняем комментарии, добавляем новый, старые оставляем
               ? { ...team, comments: [createdComment, ...team.comments] }
               : team
           ),
@@ -142,7 +175,7 @@ export default function TaskDetailsModal({
       notifications.show({
         title: 'Успешно',
         message: 'Комментарий добавлен',
-        color: 'violet',
+        color: currentStatusColor,
         autoClose: 2000,
       });
     } catch (error) {
@@ -168,7 +201,6 @@ export default function TaskDetailsModal({
         if (!prev) return prev;
 
         return {
-          // здесь такая же история, как и с добавлением комментария
           ...prev,
           teams: prev.teams.map((team) =>
             team.id === currentTeam.id
@@ -184,7 +216,7 @@ export default function TaskDetailsModal({
       notifications.show({
         title: 'Успешно',
         message: 'Комментарий удалён',
-        color: 'violet',
+        color: currentStatusColor,
         autoClose: 2000,
       });
     } catch (error) {
@@ -199,7 +231,125 @@ export default function TaskDetailsModal({
     }
   };
 
-  // чтобы 3 раза в рендер не писать одно и то же
+  const handleAddParticipant = async () => {
+    if (!currentTeam || !selectedUserTabNum || !taskDetails) return;
+
+    try {
+      setAddingParticipant(true);
+
+      await kanbanApi.addUserToTeam({
+        team_id: currentTeam.id,
+        tab_num: Number(selectedUserTabNum),
+      });
+
+      const nextParticipantsCount = currentTeam.participants.length + 1;
+
+      onTaskTeamChanged({
+        taskId: taskDetails.id,
+        teamId: currentTeam.id,
+        participantsCount: nextParticipantsCount,
+      });
+
+      await loadTaskDetails();
+      await loadAvailableUsers();
+      setSelectedUserTabNum(null);
+
+      notifications.show({
+        title: 'Успешно',
+        message: 'Сотрудник добавлен в команду',
+        color: currentStatusColor,
+        autoClose: 2000,
+      });
+    } catch (error) {
+      console.error('Ошибка добавления сотрудника:', error);
+
+      notifications.show({
+        title: 'Ошибка',
+        message: error instanceof Error ? error.message : 'Не удалось добавить сотрудника',
+        color: 'red',
+      });
+    } finally {
+      setAddingParticipant(false);
+    }
+  };
+
+  const handleRemoveParticipant = async (tabNum: number) => {
+    if (!currentTeam || !taskDetails) return;
+
+    try {
+      setRemovingParticipantTabNum(tabNum);
+
+      await kanbanApi.removeUserFromTeam({
+        team_id: Number(currentTeam.id),
+        tab_num: Number(tabNum),
+      });
+
+      const nextParticipantsCount = Math.max(currentTeam.participants.length - 1, 0);
+
+      onTaskTeamChanged({
+        taskId: Number(taskDetails.id),
+        teamId: Number(currentTeam.id),
+        participantsCount: nextParticipantsCount,
+      });
+
+      notifications.show({
+        title: 'Успешно',
+        message: 'Сотрудник удалён из команды',
+        color: currentStatusColor,
+        autoClose: 2000,
+      });
+
+      if (nextParticipantsCount === 0) {
+        onClose();
+        return;
+      }
+
+      await loadTaskDetails();
+      await loadAvailableUsers();
+    } catch (error) {
+      console.error('Ошибка удаления сотрудника:', error);
+
+      notifications.show({
+        title: 'Ошибка',
+        message: error instanceof Error ? error.message : 'Не удалось удалить сотрудника',
+        color: 'red',
+      });
+    } finally {
+      setRemovingParticipantTabNum(null);
+    }
+  };
+
+  const handleArchiveTask = async () => {
+    if (!taskDetails) return;
+
+    try {
+      setArchiving(true);
+
+      await kanbanApi.archiveTask(Number(taskDetails.id));
+
+      onTaskArchived(Number(taskDetails.id));
+
+      notifications.show({
+        title: 'Успешно',
+        message: 'Карточка отправлена в архив',
+        color: currentStatusColor,
+        autoClose: 2000,
+      });
+
+      onClose();
+    } catch (error) {
+      console.error('Ошибка архивирования карточки:', error);
+
+      notifications.show({
+        title: 'Ошибка',
+        message: error instanceof Error ? error.message : 'Не удалось архивировать карточку',
+        color: 'red',
+      });
+    } finally {
+      setArchiving(false);
+    }
+  };
+
   const renderInfoCard = (
     icon: React.ReactNode,
     label: string,
@@ -217,7 +367,6 @@ export default function TaskDetailsModal({
     </Paper>
   );
 
-  // to do: можно вынести в отдельный компонент, пока под вопросом
   const renderComment = (comment: KanbanComment) => (
     <Paper
       key={comment.id}
@@ -265,7 +414,7 @@ export default function TaskDetailsModal({
       centered
       title={
         <Group gap="sm">
-          <ThemeIcon variant="light" color="violet" radius="xl" size="lg">
+          <ThemeIcon variant="light" color={currentStatusColor} radius="xl" size="lg">
             <IconChecklist size={18} />
           </ThemeIcon>
           <Text fw={800} size="lg">
@@ -298,7 +447,7 @@ export default function TaskDetailsModal({
     >
       {loading ? (
         <Group justify="center" py={60}>
-          <Loader color="violet" />
+          <Loader color={currentStatusColor} />
         </Group>
       ) : !taskDetails ? (
         <Text c="dimmed">Нет данных по карточке</Text>
@@ -316,23 +465,31 @@ export default function TaskDetailsModal({
                 </Text>
               </div>
 
-              <Badge
-                size="lg"
-                radius="md"
-                variant="light"
-                color={statusColor[taskDetails.board_status] || 'gray'}
-              >
-                {taskDetails.score} баллов
-              </Badge>
-            </Group>
+              <Stack gap="sm" align="flex-end">
+                <Badge
+                  size="lg"
+                  radius="md"
+                  variant="light"
+                  color={currentStatusColor}
+                >
+                  {taskDetails.score} баллов
+                </Badge>
 
-            <Badge
-              variant="light"
-              radius="sm"
-              color={statusColor[taskDetails.board_status] || 'gray'}
-            >
-              {statusLabel[taskDetails.board_status] || taskDetails.board_status}
-            </Badge>
+                {canArchiveTask && (
+                  <Button
+                    size="xs"
+                    radius="md"
+                    variant="light"
+                    color={currentStatusColor}
+                    leftSection={<IconArchive size={14} />}
+                    loading={archiving}
+                    onClick={handleArchiveTask}
+                  >
+                    В архив
+                  </Button>
+                )}
+              </Stack>
+            </Group>
           </Paper>
 
           <Group grow align="stretch">
@@ -353,7 +510,7 @@ export default function TaskDetailsModal({
             )}
 
             {renderInfoCard(
-              <ThemeIcon variant="light" color="violet" radius="xl">
+              <ThemeIcon variant="light" color={currentStatusColor} radius="xl">
                 <IconUsers size={16} />
               </ThemeIcon>,
               'Команд',
@@ -363,7 +520,7 @@ export default function TaskDetailsModal({
 
           <Divider />
 
-          {taskDetails.board_status === 'backlog' ? (
+          {isBacklogView ? (
             <Stack gap="sm">
               <Text fw={700} size="lg">
                 Команды по задаче
@@ -379,11 +536,27 @@ export default function TaskDetailsModal({
                       </Badge>
                     </Group>
 
-                    <Text size="sm" c="dimmed" className={styles.descriptionText}>
-                      {team.participants.length > 0
-                        ? team.participants.map((participant) => participant.full_name).join(', ')
-                        : 'Нет участников'}
-                    </Text>
+                    {team.participants.length > 0 ? (
+                      <Stack gap="xs">
+                        {team.participants.map((participant) => (
+                          <Paper
+                            key={participant.tab_num}
+                            withBorder
+                            radius="lg"
+                            p="sm"
+                            bg="#faf8ff"
+                          >
+                            <Text size="sm" fw={600}>
+                              {participant.full_name}
+                            </Text>
+                          </Paper>
+                        ))}
+                      </Stack>
+                    ) : (
+                      <Text size="sm" c="dimmed">
+                        Нет участников
+                      </Text>
+                    )}
                   </Paper>
                 ))
               ) : (
@@ -397,26 +570,91 @@ export default function TaskDetailsModal({
           ) : currentTeam ? (
             <Stack gap="lg">
               <Paper withBorder radius="xl" p="md" bg="#ffffff">
-                <Group justify="space-between" mb="xs">
+                <Group justify="space-between" align="center" mb="xs">
                   <Text fw={700} size="lg">
                     Команда #{currentTeam.id}
                   </Text>
-                  <Badge variant="light" radius="sm">
-                    {currentTeam.status}
-                  </Badge>
+
+                  <Group gap="sm" align="flex-start">
+                    <Badge variant="light" radius="sm">
+                      {currentTeam.status}
+                    </Badge>
+
+                    {canEditTeam && (
+                      <>
+                        <Select
+                          placeholder="Выбери сотрудника"
+                          data={availableUsers.map((user) => ({
+                            value: String(user.tab_num),
+                            label: user.full_name,
+                          }))}
+                          value={selectedUserTabNum}
+                          onChange={setSelectedUserTabNum}
+                          size="xs"
+                          radius="md"
+                          searchable
+                          nothingFoundMessage="Нет доступных сотрудников"
+                          disabled={availableUsers.length === 0}
+                          style={{ minWidth: 220 }}
+                        />
+
+                        <Button
+                          size="xs"
+                          radius="md"
+                          color={currentStatusColor}
+                          loading={addingParticipant}
+                          disabled={!selectedUserTabNum}
+                          onClick={handleAddParticipant}
+                        >
+                          Добавить сотрудника
+                        </Button>
+                      </>
+                    )}
+                  </Group>
                 </Group>
 
-                <Text size="sm" c="dimmed" className={styles.descriptionText}>
-                  {currentTeam.participants.length > 0
-                    ? currentTeam.participants.map((participant) => participant.full_name).join(', ')
-                    : 'Нет участников'}
-                </Text>
+                {currentTeam.participants.length > 0 ? (
+                  <Stack gap="xs">
+                    {currentTeam.participants.map((participant) => (
+                      <Paper
+                        key={participant.tab_num}
+                        withBorder
+                        radius="lg"
+                        p="sm"
+                        bg="#faf8ff"
+                      >
+                        <Group justify="space-between" align="center">
+                          <Text size="sm" fw={600}>
+                            {participant.full_name}
+                          </Text>
+
+                          {canEditTeam && (
+                            <Button
+                              size="xs"
+                              radius="md"
+                              color="red"
+                              variant="light"
+                              loading={removingParticipantTabNum === participant.tab_num}
+                              onClick={() => handleRemoveParticipant(participant.tab_num)}
+                            >
+                              Удалить
+                            </Button>
+                          )}
+                        </Group>
+                      </Paper>
+                    ))}
+                  </Stack>
+                ) : (
+                  <Text size="sm" c="dimmed">
+                    Нет участников
+                  </Text>
+                )}
               </Paper>
 
               <Paper withBorder radius="xl" p="lg" bg="#ffffff">
                 <Group justify="space-between" align="center" mb="md">
                   <Group gap="xs">
-                    <ThemeIcon variant="light" color="violet" radius="xl">
+                    <ThemeIcon variant="light" color={currentStatusColor} radius="xl">
                       <IconMessageCircle size={16} />
                     </ThemeIcon>
                     <Text fw={700} size="lg">
@@ -461,7 +699,7 @@ export default function TaskDetailsModal({
 
                     <Button
                       radius="md"
-                      color="violet"
+                      color={currentStatusColor}
                       loading={commentLoading}
                       disabled={!canSubmitComment}
                       onClick={handleAddComment}

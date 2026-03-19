@@ -1,10 +1,12 @@
 import { Badge, Group, Paper, Text, ThemeIcon } from '@mantine/core';
 import { IconAlertCircle, IconCalendar, IconFlame, IconUsers } from '@tabler/icons-react';
 import type { KanbanStatus, KanbanTask } from '../../types/kanban';
+import type { DragEvent } from 'react';
 
 interface TaskCardProps {
   task: KanbanTask;
   onClick?: () => void;
+  onDragStart?: (event: DragEvent<HTMLDivElement>, task: KanbanTask) => void;
 }
 
 // цвета статусов
@@ -55,7 +57,7 @@ function getDeadlineState(deadlineFull: string): DeadlineState {
   return 'normal';
 }
 
-export default function TaskCard({ task, onClick }: TaskCardProps) {
+export default function TaskCard({ task, onClick, onDragStart }: TaskCardProps) {
   const color = accentByStatus[task.board_status];
   // состояние дедлайна
   const deadlineState = getDeadlineState(task.deadline_full);
@@ -66,11 +68,13 @@ export default function TaskCard({ task, onClick }: TaskCardProps) {
       radius="xl"
       p="md"
       shadow="sm"
+      draggable
+      onDragStart={(event) => onDragStart?.(event, task)}
       onClick={onClick}
       style={{
         background: 'rgba(255,255,255,0.96)',
         borderLeft: `6px solid var(--mantine-color-${color}-6)`,
-        cursor: onClick ? 'pointer' : 'default',
+        cursor: onClick || onDragStart ? 'pointer' : 'default',
         transition: 'transform 0.12s ease, box-shadow 0.12s ease',
       }}
     >
@@ -89,14 +93,18 @@ export default function TaskCard({ task, onClick }: TaskCardProps) {
       </Text>
 
       <Group justify="space-between" mt="md" align="center">
-        <Group gap="xs">
-          <ThemeIcon variant="light" size="sm" radius="md" color="blue">
-            <IconUsers size={14} />
-          </ThemeIcon>
-          <Text size="sm" c="dimmed">
-            {task.participants_count}/{task.quota}
-          </Text>
-        </Group>
+        {task.board_status !== 'backlog' ? (
+          <Group gap="xs">
+            <ThemeIcon variant="light" size="sm" radius="md" color="blue">
+              <IconUsers size={14} />
+            </ThemeIcon>
+            <Text size="sm" c="dimmed">
+              {task.participants_count}/{task.quota}
+            </Text>
+          </Group>
+        ) : (
+          <div />
+        )}
 
         <Group gap="xs" align="center">
           <ThemeIcon variant="light" size="sm" radius="md" color="gray">
@@ -118,7 +126,12 @@ export default function TaskCard({ task, onClick }: TaskCardProps) {
           )}
 
           {deadlineState === 'overdue' && (
-            <Badge color="red" variant="light" radius="sm" leftSection={<IconAlertCircle size={12} />}>
+            <Badge
+              color="red"
+              variant="light"
+              radius="sm"
+              leftSection={<IconAlertCircle size={12} />}
+            >
               Просрочено
             </Badge>
           )}

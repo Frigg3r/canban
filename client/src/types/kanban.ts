@@ -62,3 +62,23 @@ export interface AddCommentPayload {
   text: string;
   author_tab_num: number;
 }
+
+export interface TakeTaskPayload {
+  task_id: number;
+  participants: number[];
+}
+
+export interface AddUserToTeamPayload {
+  team_id: number;
+  tab_num: number;
+}
+
+export interface KanbanAvailableUser {
+  tab_num: number;
+  full_name: string;
+}
+
+export interface RemoveUserFromTeamPayload {
+  team_id: number;
+  tab_num: number;
+}

@@ -25,25 +25,36 @@ export default function KanbanBoard() {
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
   const [selectedTeamId, setSelectedTeamId] = useState<number | null>(null);
   const [taskDetailsOpened, setTaskDetailsOpened] = useState(false);
+  const [draggedTask, setDraggedTask] = useState<KanbanTask | null>(null);
+  const [isDroppingTask, setIsDroppingTask] = useState(false);
 
   // пока создание задачи разрешено всем
   const canCreateTask = true;
 
-  useEffect(() => {
-    const loadTasks = async () => {
-      try {
+  // вынес загрузку доски в отдельную функцию,
+  // чтобы потом можно было переиспользовать ее после действий:
+  // взять задачу в работу, сменить статус, подтвердить выполнение
+  const loadTasks = async (withLoader = false) => {
+    try {
+      if (withLoader) {
         setLoading(true);
-        setError('');
-        const data = await kanbanApi.getTasks();
-        setTasks(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Ошибка загрузки');
-      } finally {
+      }
+
+      setError('');
+      const data = await kanbanApi.getTasks();
+      setTasks(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Ошибка загрузки');
+    } finally {
+      if (withLoader) {
         setLoading(false);
       }
-    };
+    }
+  };
 
-    loadTasks();
+  // при первом открытии страницы просто загружаем доску
+  useEffect(() => {
+    loadTasks(true);
   }, []);
 
   const openCreateTaskModal = () => {
@@ -64,6 +75,84 @@ export default function KanbanBoard() {
     setTaskDetailsOpened(false);
     setSelectedTaskId(null);
     setSelectedTeamId(null);
+  };
+
+  // локально обновляем только одну карточку после изменения команды,
+  // чтобы не перезагружать всю доску и не было дергания
+  const handleTaskTeamChanged = ({
+    taskId,
+    teamId,
+    participantsCount,
+  }: {
+    taskId: number;
+    teamId: number | null;
+    participantsCount: number;
+  }) => {
+    setTasks((prev) => {
+      // если удалили последнего участника:
+      // 1) убираем карточку конкретной команды
+      // 2) добавляем backlog-карточку, если её ещё нет
+      if (participantsCount === 0) {
+        const filteredTasks = prev.filter(
+          (task) =>
+            !(
+              Number(task.id) === Number(taskId) &&
+              Number(task.team_id) === Number(teamId)
+            )
+        );
+
+        const hasBacklogCard = filteredTasks.some(
+          (task) =>
+            Number(task.id) === Number(taskId) &&
+            task.board_status === 'backlog' &&
+            task.team_id == null
+        );
+
+        if (hasBacklogCard) {
+          return filteredTasks;
+        }
+
+        const sourceTask = prev.find(
+          (task) =>
+            Number(task.id) === Number(taskId) &&
+            Number(task.team_id) === Number(teamId)
+        );
+
+        if (!sourceTask) {
+          return filteredTasks;
+        }
+
+        return [
+          {
+            ...sourceTask,
+            board_status: 'backlog',
+            team_id: null,
+            participants_count: 0,
+          },
+          ...filteredTasks,
+        ];
+      }
+
+      // если участники ещё остались — просто обновляем счетчик
+      return prev.map((task) => {
+        if (Number(task.id) !== Number(taskId)) {
+          return task;
+        }
+
+        if (Number(task.team_id) !== Number(teamId)) {
+          return task;
+        }
+
+        return {
+          ...task,
+          participants_count: participantsCount,
+        };
+      });
+    });
+  };
+
+  const handleTaskArchived = (taskId: number) => {
+    setTasks((prev) => prev.filter((task) => Number(task.id) !== Number(taskId)));
   };
 
   // обработчик отправки формы создания карточки
@@ -87,6 +176,133 @@ export default function KanbanBoard() {
         title: 'Ошибка',
         message: 'Не удалось создать задачу',
       });
+    }
+  };
+
+  const handleDragStart = (task: KanbanTask) => {
+    setDraggedTask(task);
+  };
+
+  const handleDropTask = async (targetStatus: KanbanStatus) => {
+    if (!draggedTask || isDroppingTask) return;
+
+    if (draggedTask.board_status === targetStatus) {
+      setDraggedTask(null);
+      return;
+    }
+
+    const isAllowedTransition =
+      (draggedTask.board_status === 'backlog' && targetStatus === 'inProgress') ||
+      (draggedTask.board_status === 'inProgress' &&
+        (targetStatus === 'backlog' || targetStatus === 'review')) ||
+      (draggedTask.board_status === 'review' &&
+        (targetStatus === 'inProgress' || targetStatus === 'done')) ||
+      (draggedTask.board_status === 'done' && targetStatus === 'review');
+
+    if (!isAllowedTransition) {
+      setDraggedTask(null);
+      return;
+    }
+
+    try {
+      setIsDroppingTask(true);
+
+      if (draggedTask.board_status === 'backlog' && targetStatus === 'inProgress') {
+        await kanbanApi.takeTask({
+          task_id: draggedTask.id,
+          participants: [1003],
+        });
+
+        await loadTasks();
+
+        notifications.show({
+          title: 'Успешно',
+          message: 'Задача взята в работу',
+          autoClose: 2000,
+          color: 'violet',
+        });
+      } else if (draggedTask.board_status === 'inProgress' && targetStatus === 'backlog') {
+        await kanbanApi.returnTaskToBacklog({
+          task_id: draggedTask.id,
+          team_id: draggedTask.team_id!,
+        });
+
+        await loadTasks();
+
+        notifications.show({
+          title: 'Успешно',
+          message: 'Задача возвращена в бэклог',
+          autoClose: 2000,
+          color: 'violet',
+        });
+      } else if (draggedTask.board_status === 'inProgress' && targetStatus === 'review') {
+        await kanbanApi.changeTeamStatus({
+          team_id: draggedTask.team_id!,
+          status: 'review',
+        });
+
+        await loadTasks();
+
+        notifications.show({
+          title: 'Успешно',
+          message: 'Задача переведена на проверку',
+          autoClose: 2000,
+          color: 'violet',
+        });
+      } else if (draggedTask.board_status === 'review' && targetStatus === 'inProgress') {
+        await kanbanApi.changeTeamStatus({
+          team_id: draggedTask.team_id!,
+          status: 'inProgress',
+        });
+
+        await loadTasks();
+
+        notifications.show({
+          title: 'Успешно',
+          message: 'Задача возвращена в работу',
+          autoClose: 2000,
+          color: 'violet',
+        });
+      } else if (draggedTask.board_status === 'review' && targetStatus === 'done') {
+        await kanbanApi.changeTeamStatus({
+          team_id: draggedTask.team_id!,
+          status: 'done',
+        });
+
+        await loadTasks();
+
+        notifications.show({
+          title: 'Успешно',
+          message: 'Задача завершена',
+          autoClose: 2000,
+          color: 'violet',
+        });
+      } else if (draggedTask.board_status === 'done' && targetStatus === 'review') {
+        await kanbanApi.changeTeamStatus({
+          team_id: draggedTask.team_id!,
+          status: 'review',
+        });
+
+        await loadTasks();
+
+        notifications.show({
+          title: 'Успешно',
+          message: 'Задача возвращена на проверку',
+          autoClose: 2000,
+          color: 'violet',
+        });
+      }
+    } catch (error) {
+      console.error('Ошибка изменения статуса задачи:', error);
+
+      notifications.show({
+        title: 'Ошибка',
+        message: error instanceof Error ? error.message : 'Не удалось изменить статус задачи',
+        color: 'red',
+      });
+    } finally {
+      setDraggedTask(null);
+      setIsDroppingTask(false);
     }
   };
 
@@ -133,13 +349,18 @@ export default function KanbanBoard() {
             <KanbanColumn
               status={status}
               count={groupedTasks[status].length}
+              onDropTask={handleDropTask}
             >
               {groupedTasks[status].length > 0 ? (
                 groupedTasks[status].map((task) => (
-                  <TaskCard 
-                    key={task.id} 
+                  <TaskCard
+                    // одна и та же задача может встречаться несколько раз:
+                    // как backlog-карточка и как карточка конкретной команды,
+                    // поэтому ключ сделал составной
+                    key={`${task.id}-${task.team_id ?? 'backlog'}`}
                     task={task}
                     onClick={() => openTaskDetailsModal(task)}
+                    onDragStart={(_, draggedTask) => handleDragStart(draggedTask)}
                   />
                 ))
               ) : (
@@ -163,6 +384,8 @@ export default function KanbanBoard() {
         taskId={selectedTaskId}
         teamId={selectedTeamId}
         onClose={closeTaskDetailsModal}
+        onTaskTeamChanged={handleTaskTeamChanged}
+        onTaskArchived={handleTaskArchived}
       />
     </Box>
   );
