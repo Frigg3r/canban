@@ -35,16 +35,18 @@ import styles from './TaskDetailsModal.module.css';
 
 import { useAppAuth } from '../../App';
 
+interface TaskParticipantsChangedPayload {
+  taskId: number;
+  teamId: number;
+  participantsCount: number;
+}
+
 interface TaskDetailsModalProps {
   opened: boolean;
   taskId: number | null;
   teamId: number | null;
   onClose: () => void;
-  onTaskTeamChanged: (payload: {
-    taskId: number;
-    teamId: number | null;
-    participantsCount: number;
-  }) => void;
+  onTaskParticipantsChanged: (payload: TaskParticipantsChangedPayload) => void;
   onTaskArchived: (taskId: number) => void;
 }
 
@@ -67,7 +69,7 @@ export default function TaskDetailsModal({
   taskId,
   teamId,
   onClose,
-  onTaskTeamChanged,
+  onTaskParticipantsChanged,
   onTaskArchived
 }: TaskDetailsModalProps) {
   const [taskDetails, setTaskDetails] = useState<KanbanTaskDetails | null>(null);
@@ -260,7 +262,7 @@ export default function TaskDetailsModal({
 
       const nextParticipantsCount = currentTeam.participants.length + 1;
 
-      onTaskTeamChanged({
+      onTaskParticipantsChanged({
         taskId: taskDetails.id,
         teamId: currentTeam.id,
         participantsCount: nextParticipantsCount,
@@ -302,7 +304,7 @@ export default function TaskDetailsModal({
 
       const nextParticipantsCount = Math.max(currentTeam.participants.length - 1, 0);
 
-      onTaskTeamChanged({
+      onTaskParticipantsChanged({
         taskId: Number(taskDetails.id),
         teamId: Number(currentTeam.id),
         participantsCount: nextParticipantsCount,
@@ -548,7 +550,7 @@ export default function TaskDetailsModal({
                     <Group justify="space-between" mb="xs">
                       <Text fw={700}>Команда #{team.id}</Text>
                       <Badge variant="light" radius="sm">
-                        {team.status}
+                        {statusLabel[team.status]}
                       </Badge>
                     </Group>
 
@@ -593,7 +595,7 @@ export default function TaskDetailsModal({
 
                   <Group gap="sm" align="flex-start">
                     <Badge variant="light" radius="sm">
-                      {currentTeam.status}
+                      {statusLabel[currentTeam.status]}
                     </Badge>
 
                     {canEditTeam && (

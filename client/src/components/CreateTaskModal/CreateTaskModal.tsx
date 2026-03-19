@@ -1,9 +1,8 @@
-import { Button, Group, Modal, NumberInput, Stack, TextInput, Textarea } from '@mantine/core';
-import { DatePickerInput } from '@mantine/dates'; // работа с датами в mantine в отдельном пакете
 import { useEffect, useState } from 'react';
+import { Button, Group, Modal, NumberInput, Stack, TextInput, Textarea } from '@mantine/core';
+import { DatePickerInput } from '@mantine/dates';
 import type { CreateTaskPayload } from '../../types/kanban';
 
-// интерфейс для пропсов снаружи
 interface CreateTaskModalProps {
   opened: boolean;
   onClose: () => void;
@@ -21,43 +20,52 @@ export default function CreateTaskModal({
   const [description, setDescription] = useState('');
   const [score, setScore] = useState<number | string>(10);
   const [quota, setQuota] = useState<number | string>(1);
-  const [deadline, setDeadline] = useState<Date | null>(null);
+  const [deadline, setDeadline] = useState<string | null>(null);
 
-  // приводим форму к начальному состоянию при повторном открытии
+  const resetForm = () => {
+    setName('');
+    setDescription('');
+    setScore(10);
+    setQuota(1);
+    setDeadline(null);
+  };
+
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
+
   useEffect(() => {
     if (!opened) {
-      setName('');
-      setDescription('');
-      setScore(10);
-      setQuota(1);
-      setDeadline(null);
+      resetForm();
     }
   }, [opened]);
 
-  // внутренний обработчик
   const handleSubmit = () => {
-    if (!name.trim()) return;
-    if (!description.trim()) return;
-    if (!score || Number(score) <= 0) return;
-    if (!quota || Number(quota) <= 0) return;
-    if (!deadline) return;
+    const trimmedName = name.trim();
+    const trimmedDescription = description.trim();
+    const numericScore = Number(score);
+    const numericQuota = Number(quota);
 
-    const formattedDeadline = new Date(deadline).toISOString().slice(0, 10);
+    if (!trimmedName || !trimmedDescription || numericScore <= 0 || numericQuota <= 0 || !deadline) {
+      return;
+    }
 
-    // вызываем метод родительского компонента уже с собранными данными
-    onSubmit({
-      name: name.trim(),
-      description: description.trim(),
-      score: Number(score),
-      quota: Number(quota),
-      deadline: formattedDeadline,
-    });
+    const payload: CreateTaskPayload = {
+      name: trimmedName,
+      description: trimmedDescription,
+      score: numericScore,
+      quota: numericQuota,
+      deadline,
+    };
+
+    onSubmit(payload);
   };
 
   return (
     <Modal
       opened={opened}
-      onClose={onClose}
+      onClose={handleClose}
       title="Создание карточки"
       centered
       radius="xl"
@@ -126,7 +134,7 @@ export default function CreateTaskModal({
           label="Дедлайн"
           placeholder="Выберите дату"
           value={deadline}
-          onChange={(value) => setDeadline(value as Date | null)}
+          onChange={setDeadline}
           valueFormat="DD.MM.YYYY"
           dropdownType="popover"
           radius="md"
@@ -137,11 +145,11 @@ export default function CreateTaskModal({
         />
 
         <Group justify="flex-end" mt="sm">
-          <Button variant="default" onClick={onClose}>
+          <Button variant="default" onClick={handleClose}>
             Отмена
           </Button>
 
-          <Button onClick={handleSubmit} loading={loading} color='violet'>
+          <Button onClick={handleSubmit} loading={loading} color="violet">
             Создать
           </Button>
         </Group>

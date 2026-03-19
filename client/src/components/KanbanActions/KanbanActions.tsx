@@ -9,28 +9,26 @@ export default function KanbanActions({
   canCreateTask,
   onCreateTaskClick,
 }: KanbanActionsProps) {
+  if (!canCreateTask) {
+    return null;
+  }
+
   return (
     <Group justify="flex-start" mb="md">
-      {canCreateTask && (
-        <Button
-          color="violet"
-          radius="md"
-          size="sm"
-          onClick={onCreateTaskClick}
-          styles={{
-            root: {
-              backgroundColor: '#7950F2',
-              fontWeight: 600,
-              paddingInline: '14px',
-            },
-            label: {
-              color: '#ffffff',
-            },
-          }}
-        >
-          Добавить карточку
-        </Button>
-      )}
+      <Button
+        color="violet"
+        radius="md"
+        size="sm"
+        onClick={onCreateTaskClick}
+        styles={{
+          root: {
+            fontWeight: 600,
+            paddingInline: '14px',
+          },
+        }}
+      >
+        Добавить карточку
+      </Button>
     </Group>
   );
 }
