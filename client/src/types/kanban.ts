@@ -1,4 +1,5 @@
 export type KanbanStatus = 'backlog' | 'inProgress' | 'review' | 'done';
+export type TeamWorkflowStatus = Exclude<KanbanStatus, 'backlog'>;
 
 export interface KanbanTask {
   id: number;
@@ -10,7 +11,6 @@ export interface KanbanTask {
   deadline_full: string;
   participants_count: number;
   board_status: KanbanStatus;
-  // null - для карточки в бэклоге, number - для всех других столбцов
   team_id: number | null;
 }
 
@@ -38,12 +38,11 @@ export interface KanbanComment {
 
 export interface KanbanTeamDetails {
   id: number;
-  status: KanbanStatus;
+  status: TeamWorkflowStatus;
   participants: KanbanTeamParticipant[];
   comments: KanbanComment[];
 }
 
-// отдельный интерфейс для задачи именно в модалке, так как это 2 разные сущности
 export interface KanbanTaskDetails {
   id: number;
   name: string;
@@ -52,8 +51,6 @@ export interface KanbanTaskDetails {
   quota: number;
   deadline_full: string;
   board_status: KanbanStatus;
-  // в бэклог столбце будут все команды, работающие над задачей
-  // во всех других только конкретная команда
   teams: KanbanTeamDetails[];
 }
 
@@ -89,4 +86,14 @@ export interface KanbanCurrentUser {
   email: string;
   role_id: number;
   role_name: string;
+}
+
+export interface ReturnTaskToBacklogPayload {
+  task_id: number;
+  team_id: number;
+}
+
+export interface ChangeTeamStatusPayload {
+  team_id: number;
+  status: TeamWorkflowStatus;
 }

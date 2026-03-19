@@ -5,20 +5,25 @@ export class BaseApi {
     this.baseUrl = baseUrl;
   }
 
-  // может вернуть любой тип (<T>), path - кусок адреса, options - доп настройки для fetch
+  // метод может работать с любым типом
   protected async request<T>(path: string, options: RequestInit = {}): Promise<T> {
+    const headers: Record<string, string> = {
+      ...(options.headers as Record<string, string>),
+    };
+
+    if (options.body) {
+      headers['Content-Type'] = 'application/json';
+    }
+
     const response = await fetch(`${this.baseUrl}${path}`, {
       ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...(options.headers ?? {}),  // если переданы доп заголовки
-      },
+      headers,
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP error: ${response.status}`);
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
 
-    return response.json() as Promise<T>;
+    return (await response.json()) as T;
   }
 }

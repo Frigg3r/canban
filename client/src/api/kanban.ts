@@ -1,52 +1,53 @@
 import { BaseApi } from './ApiClass';
 import type {
-  CreateTaskPayload,
-  KanbanTask,
   AddCommentPayload,
-  KanbanComment,
-  KanbanTaskDetails,
-  TakeTaskPayload,
   AddUserToTeamPayload,
+  CreateTaskPayload,
   KanbanAvailableUser,
+  KanbanComment,
+  KanbanCurrentUser,
+  KanbanTask,
+  KanbanTaskDetails,
   RemoveUserFromTeamPayload,
-  KanbanCurrentUser
+  TakeTaskPayload,
+  ReturnTaskToBacklogPayload,
+  ChangeTeamStatusPayload
 } from '../types/kanban';
 
-// to do: можно типизировать ответ сервера, пока не делал, 
-// поэтому пока this.request<any>
+// добавил тип ответа сервера
+interface ApiResponse<T> {
+  ok: boolean;
+  data: T;
+  message?: string;
+}
 
 class KanbanApi extends BaseApi {
   constructor() {
     super('http://localhost:8000');
   }
 
-  // получение задач
-  async getTasks(): Promise<KanbanTask[]> {
-    const result = await this.request<any>('/get-board.php');
+  private async requestData<T>(path: string, options?: RequestInit): Promise<T> {
+    const result = await this.request<ApiResponse<T>>(path, options);
 
     if (!result.ok) {
-      throw new Error(result.message || 'Не удалось загрузить задачи');
+      throw new Error(result.message || 'Ошибка запроса');
     }
 
     return result.data;
   }
 
-  // создание карточки
-  async createTask(payload: CreateTaskPayload): Promise<KanbanTask> {
-    const result = await this.request<any>('/create-task.php', {
+  getTasks() {
+    return this.requestData<KanbanTask[]>('/get-board.php');
+  }
+
+  createTask(payload: CreateTaskPayload) {
+    return this.requestData<KanbanTask>('/create-task.php', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
-
-    if (!result.ok) {
-      throw new Error(result.message || 'Не удалось создать задачу');
-    }
-
-    return result.data;
   }
 
-  // получение полных данных карточки для модалки
-  async getTaskDetails(taskId: number, teamId?: number | null): Promise<KanbanTaskDetails> {
+  getTaskDetails(taskId: number, teamId?: number | null) {
     const query = new URLSearchParams({
       task_id: String(taskId),
     });
@@ -55,136 +56,76 @@ class KanbanApi extends BaseApi {
       query.append('team_id', String(teamId));
     }
 
-    const result = await this.request<any>(`/get-task-details.php?${query.toString()}`);
-
-    if (!result.ok) {
-      throw new Error(result.message || 'Не удалось загрузить данные карточки');
-    }
-
-    return result.data;
+    return this.requestData<KanbanTaskDetails>(
+      `/get-task-details.php?${query.toString()}`
+    );
   }
 
-  // добавление комментария
-  async addComment(payload: AddCommentPayload): Promise<KanbanComment> {
-    const result = await this.request<any>('/add-comment.php', {
+  addComment(payload: AddCommentPayload) {
+    return this.requestData<KanbanComment>('/add-comment.php', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
-
-    if (!result.ok) {
-      throw new Error(result.message || 'Не удалось добавить комментарий');
-    }
-
-    return result.data;
   }
 
-  // удаление комментария
   async deleteComment(commentId: number): Promise<void> {
-    const result = await this.request<any>(`/delete-comment.php?comment_id=${commentId}`, {
+    await this.requestData<unknown>(`/delete-comment.php?comment_id=${commentId}`, {
       method: 'DELETE',
     });
-
-    if (!result.ok) {
-      throw new Error(result.message || 'Не удалось удалить комментарий');
-    }
   }
 
-  // взятие задачи в работу
-  async takeTask(payload: TakeTaskPayload): Promise<any> {
-    const result = await this.request<any>('/take-task.php', {
+  takeTask(payload: TakeTaskPayload) {
+    return this.requestData<unknown>('/take-task.php', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
-
-    if (!result.ok) {
-      throw new Error(result.message || 'Не удалось взять задачу в работу');
-    }
-
-    return result.data;
   }
 
-  // добавление пользователя в команду
   async addUserToTeam(payload: AddUserToTeamPayload): Promise<void> {
-    const result = await this.request<any>('/add-user-to-team.php', {
+    await this.requestData<unknown>('/add-user-to-team.php', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
-
-    if (!result.ok) {
-      throw new Error(result.message || 'Не удалось добавить сотрудника в команду');
-    }
   }
 
-  // метод проверки наличия у добавляемого сотрудника в команду текущей задачи
-  async getAvailableUsers(taskId: number): Promise<KanbanAvailableUser[]> {
-    const result = await this.request<any>(`/get-available-users.php?task_id=${taskId}`);
-
-    if (!result.ok) {
-      throw new Error(result.message || 'Не удалось загрузить список сотрудников');
-    }
-
-    return result.data;
+  getAvailableUsers(taskId: number) {
+    return this.requestData<KanbanAvailableUser[]>(
+      `/get-available-users.php?task_id=${taskId}`
+    );
   }
 
-  // удаление сотрудника из команды
   async removeUserFromTeam(payload: RemoveUserFromTeamPayload): Promise<void> {
-    const result = await this.request<any>('/remove-user-from-team.php', {
+    await this.requestData<unknown>('/remove-user-from-team.php', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
-
-    if (!result.ok) {
-      throw new Error(result.message || 'Не удалось удалить сотрудника из команды');
-    }
   }
 
-  // архивирование задачи
   async archiveTask(taskId: number): Promise<void> {
-    const result = await this.request<any>('/archive-task.php', {
+    await this.requestData<unknown>('/archive-task.php', {
       method: 'POST',
-      body: JSON.stringify({
-        task_id: taskId,
-      }),
+      body: JSON.stringify({ task_id: taskId }),
     });
-
-    if (!result.ok) {
-      throw new Error(result.message || 'Не удалось архивировать задачу');
-    }
   }
 
-  // возврат карточки в бэклог
-  async returnTaskToBacklog(payload: { task_id: number; team_id: number }): Promise<void> {
-    const result = await this.request<any>('/return-task-to-backlog.php', {
+  async returnTaskToBacklog(payload: ReturnTaskToBacklogPayload): Promise<void> {
+    await this.requestData<unknown>('/return-task-to-backlog.php', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
-
-    if (!result.ok) {
-      throw new Error(result.message || 'Не удалось вернуть задачу в бэклог');
-    }
   }
 
-  // метод для изменения статуса (кроме Бэклог -> В работе)
-  async changeTeamStatus(payload: { team_id: number; status: 'inProgress' | 'review' | 'done' }): Promise<void> {
-    const result = await this.request<any>('/change-team-status.php', {
+  async changeTeamStatus(payload: ChangeTeamStatusPayload): Promise<void> {
+    await this.requestData<unknown>('/change-team-status.php', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
-
-    if (!result.ok) {
-      throw new Error(result.message || 'Не удалось изменить статус команды');
-    }
   }
 
-  // получение текущего пользователя по табельному номеру
-  async getCurrentUser(tabNum: number): Promise<KanbanCurrentUser> {
-    const result = await this.request<any>(`/get-current-user.php?tab_num=${tabNum}`);
-
-    if (!result.ok) {
-      throw new Error(result.message || 'Не удалось загрузить текущего пользователя');
-    }
-
-    return result.data;
+  getCurrentUser(tabNum: number) {
+    return this.requestData<KanbanCurrentUser>(
+      `/get-current-user.php?tab_num=${tabNum}`
+    );
   }
 }
 
