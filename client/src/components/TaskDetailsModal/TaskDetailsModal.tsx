@@ -1,28 +1,16 @@
 import { useEffect, useState } from 'react';
 import {
   Badge,
-  Button,
   Divider,
   Group,
   Loader,
   Modal,
   Paper,
-  ScrollArea,
   Stack,
   Text,
-  Textarea,
   ThemeIcon,
-  Select,
 } from '@mantine/core';
-import {
-  IconArchive,
-  IconCalendar,
-  IconChecklist,
-  IconMessageCircle,
-  IconTargetArrow,
-  IconTrash,
-  IconUsers,
-} from '@tabler/icons-react';
+import { IconChecklist } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { kanbanApi } from '../../api/kanban';
 import type {
@@ -31,46 +19,41 @@ import type {
   KanbanAvailableUser,
 } from '../../types/kanban';
 
-import styles from './TaskDetailsModal.module.css';
-
+import TaskCommentsSection from './TaskCommentsSection';
+import TaskTeamSection from './TaskTeamSection';
+import TaskDetailsHero from './TaskDetailsHero';
+import TaskInfoCards from './TaskInfoCards';
+import { statusColor, statusLabel } from './taskDetails.constants';
+import {
+  getCanArchiveTask,
+  getCanCommentCurrentTeam,
+  getCanDeleteComment,
+  getCanEditTeam,
+  getCanRemoveParticipant,
+  getCanSubmitComment,
+} from './taskDetails.permissions';
 import { useAppAuth } from '../../App';
-
-interface TaskParticipantsChangedPayload {
-  taskId: number;
-  teamId: number;
-  participantsCount: number;
-}
 
 interface TaskDetailsModalProps {
   opened: boolean;
   taskId: number | null;
   teamId: number | null;
   onClose: () => void;
-  onTaskParticipantsChanged: (payload: TaskParticipantsChangedPayload) => void;
+  onTaskTeamChanged: (payload: {
+    taskId: number;
+    teamId: number | null;
+    participantsCount: number;
+  }) => void;
   onTaskArchived: (taskId: number) => void;
 }
-
-const statusLabel: Record<string, string> = {
-  backlog: 'Бэклог',
-  inProgress: 'В работе',
-  review: 'На проверке',
-  done: 'Готово',
-};
-
-const statusColor: Record<string, string> = {
-  backlog: 'violet',
-  inProgress: 'blue',
-  review: 'yellow',
-  done: 'teal',
-};
 
 export default function TaskDetailsModal({
   opened,
   taskId,
   teamId,
   onClose,
-  onTaskParticipantsChanged,
-  onTaskArchived
+  onTaskTeamChanged,
+  onTaskArchived,
 }: TaskDetailsModalProps) {
   const [taskDetails, setTaskDetails] = useState<KanbanTaskDetails | null>(null);
   const [loading, setLoading] = useState(false);
@@ -79,7 +62,6 @@ export default function TaskDetailsModal({
   const [deletingCommentId, setDeletingCommentId] = useState<number | null>(null);
   const [addingParticipant, setAddingParticipant] = useState(false);
   const [removingParticipantTabNum, setRemovingParticipantTabNum] = useState<number | null>(null);
-
   const [availableUsers, setAvailableUsers] = useState<KanbanAvailableUser[]>([]);
   const [selectedUserTabNum, setSelectedUserTabNum] = useState<string | null>(null);
   const [archiving, setArchiving] = useState(false);
@@ -143,25 +125,24 @@ export default function TaskDetailsModal({
 
   const currentStatusKey = currentTeam?.status ?? taskDetails?.board_status ?? 'backlog';
   const currentStatusColor = statusColor[currentStatusKey] || 'gray';
-
-  const canArchiveTask =
-    (currentUser.role_name === 'Руководитель' ||
-      currentUser.role_name === 'Администратор') &&
-    (
-      currentStatusKey === 'backlog' ||
-      currentStatusKey === 'done'
-    );
-
-  const canEditTeam =
-    !isBacklogView &&
-    currentTeam?.status === 'inProgress' &&
-    (
-      currentUser.role_name === 'Руководитель' ||
-      currentUser.role_name === 'Администратор'
-    );
-
   const trimmedComment = commentText.trim();
-  const canSubmitComment = Boolean(currentTeam && trimmedComment && !commentLoading);
+
+  const canArchiveTask = getCanArchiveTask(currentUser, currentStatusKey);
+  const canCommentCurrentTeam = getCanCommentCurrentTeam(currentTeam, currentUser);
+  const canEditTeam = getCanEditTeam(isBacklogView, currentTeam, canCommentCurrentTeam);
+
+  const canRemoveParticipant = (tabNum: number) =>
+    getCanRemoveParticipant(currentUser, tabNum);
+
+  const canSubmitComment = getCanSubmitComment(
+    currentTeam,
+    canCommentCurrentTeam,
+    trimmedComment,
+    commentLoading
+  );
+
+  const canDeleteComment = (comment: KanbanComment) =>
+    getCanDeleteComment(comment, currentUser);
 
   const handleAddComment = async () => {
     if (!currentTeam || !trimmedComment) return;
@@ -208,12 +189,21 @@ export default function TaskDetailsModal({
     }
   };
 
-  const handleDeleteComment = async (commentId: number) => {
+  const handleDeleteComment = async (comment: KanbanComment) => {
     if (!currentTeam) return;
 
+    if (!canDeleteComment(comment)) {
+      notifications.show({
+        title: 'Ошибка',
+        message: 'Удалять комментарий может только автор',
+        color: 'red',
+      });
+      return;
+    }
+
     try {
-      setDeletingCommentId(commentId);
-      await kanbanApi.deleteComment(commentId);
+      setDeletingCommentId(comment.id);
+      await kanbanApi.deleteComment(comment.id);
 
       setTaskDetails((prev) => {
         if (!prev) return prev;
@@ -223,9 +213,9 @@ export default function TaskDetailsModal({
           teams: prev.teams.map((team) =>
             team.id === currentTeam.id
               ? {
-                ...team,
-                comments: team.comments.filter((comment) => comment.id !== commentId),
-              }
+                  ...team,
+                  comments: team.comments.filter((item) => item.id !== comment.id),
+                }
               : team
           ),
         };
@@ -262,7 +252,7 @@ export default function TaskDetailsModal({
 
       const nextParticipantsCount = currentTeam.participants.length + 1;
 
-      onTaskParticipantsChanged({
+      onTaskTeamChanged({
         taskId: taskDetails.id,
         teamId: currentTeam.id,
         participantsCount: nextParticipantsCount,
@@ -292,7 +282,7 @@ export default function TaskDetailsModal({
   };
 
   const handleRemoveParticipant = async (tabNum: number) => {
-    if (!currentTeam || !taskDetails) return;
+    if (!currentTeam || !taskDetails || !canRemoveParticipant(tabNum)) return;
 
     try {
       setRemovingParticipantTabNum(tabNum);
@@ -304,7 +294,7 @@ export default function TaskDetailsModal({
 
       const nextParticipantsCount = Math.max(currentTeam.participants.length - 1, 0);
 
-      onTaskParticipantsChanged({
+      onTaskTeamChanged({
         taskId: Number(taskDetails.id),
         teamId: Number(currentTeam.id),
         participantsCount: nextParticipantsCount,
@@ -368,62 +358,6 @@ export default function TaskDetailsModal({
     }
   };
 
-  const renderInfoCard = (
-    icon: React.ReactNode,
-    label: string,
-    value: string | number
-  ) => (
-    <Paper withBorder radius="xl" p="md">
-      <Group gap="xs" mb="xs">
-        {icon}
-        <Text size="sm" c="dimmed">
-          {label}
-        </Text>
-      </Group>
-
-      <Text fw={700}>{value}</Text>
-    </Paper>
-  );
-
-  const renderComment = (comment: KanbanComment) => (
-    <Paper
-      key={comment.id}
-      withBorder
-      radius="lg"
-      p="md"
-      className={styles.commentCard}
-    >
-      <Group justify="space-between" align="flex-start" mb="xs">
-        <div className={styles.commentMeta}>
-          <Text fw={700} size="sm">
-            {comment.author_name}
-          </Text>
-          <Text size="xs" c="dimmed">
-            {comment.created_at}
-          </Text>
-        </div>
-
-        {comment.can_delete && (
-          <Button
-            size="xs"
-            color="red"
-            variant="light"
-            radius="md"
-            leftSection={<IconTrash size={14} />}
-            loading={deletingCommentId === comment.id}
-            onClick={() => handleDeleteComment(comment.id)}
-          >
-            Удалить
-          </Button>
-        )}
-      </Group>
-
-      <Text size="sm" className={styles.commentText}>
-        {comment.text}
-      </Text>
-    </Paper>
-  );
-
   return (
     <Modal
       opened={opened}
@@ -471,70 +405,22 @@ export default function TaskDetailsModal({
         <Text c="dimmed">Нет данных по карточке</Text>
       ) : (
         <Stack gap="lg">
-          <Paper radius="xl" p="lg" className={styles.heroCard}>
-            <Group justify="space-between" align="flex-start" gap="md" mb="sm">
-              <div style={{ flex: 1 }}>
-                <Text fw={800} size="xl" lh={1.2}>
-                  {taskDetails.name}
-                </Text>
+          <TaskDetailsHero
+            title={taskDetails.name}
+            description={taskDetails.description}
+            score={taskDetails.score}
+            currentStatusColor={currentStatusColor}
+            canArchiveTask={canArchiveTask}
+            archiving={archiving}
+            onArchive={handleArchiveTask}
+          />
 
-                <Text mt="sm" size="sm" c="dimmed" className={styles.descriptionText}>
-                  {taskDetails.description || 'Без описания'}
-                </Text>
-              </div>
-
-              <Stack gap="sm" align="flex-end">
-                <Badge
-                  size="lg"
-                  radius="md"
-                  variant="light"
-                  color={currentStatusColor}
-                >
-                  {taskDetails.score} баллов
-                </Badge>
-
-                {canArchiveTask && (
-                  <Button
-                    size="xs"
-                    radius="md"
-                    variant="light"
-                    color={currentStatusColor}
-                    leftSection={<IconArchive size={14} />}
-                    loading={archiving}
-                    onClick={handleArchiveTask}
-                  >
-                    В архив
-                  </Button>
-                )}
-              </Stack>
-            </Group>
-          </Paper>
-
-          <Group grow align="stretch">
-            {renderInfoCard(
-              <ThemeIcon variant="light" color="gray" radius="xl">
-                <IconCalendar size={16} />
-              </ThemeIcon>,
-              'Дедлайн',
-              taskDetails.deadline_full?.split(' ')[0] || '-'
-            )}
-
-            {renderInfoCard(
-              <ThemeIcon variant="light" color="blue" radius="xl">
-                <IconTargetArrow size={16} />
-              </ThemeIcon>,
-              'Квота',
-              taskDetails.quota
-            )}
-
-            {renderInfoCard(
-              <ThemeIcon variant="light" color={currentStatusColor} radius="xl">
-                <IconUsers size={16} />
-              </ThemeIcon>,
-              'Команд',
-              taskDetails.teams.length
-            )}
-          </Group>
+          <TaskInfoCards
+            deadline={taskDetails.deadline_full?.split(' ')[0] || '-'}
+            quota={taskDetails.quota}
+            teamsCount={taskDetails.teams.length}
+            currentStatusColor={currentStatusColor}
+          />
 
           <Divider />
 
@@ -587,160 +473,34 @@ export default function TaskDetailsModal({
             </Stack>
           ) : currentTeam ? (
             <Stack gap="lg">
-              <Paper withBorder radius="xl" p="md" bg="#ffffff">
-                <Group justify="space-between" align="center" mb="xs">
-                  <Text fw={700} size="lg">
-                    Команда #{currentTeam.id}
-                  </Text>
+              <TaskTeamSection
+                team={currentTeam}
+                statusLabel={statusLabel}
+                currentStatusColor={currentStatusColor}
+                availableUsers={availableUsers}
+                selectedUserTabNum={selectedUserTabNum}
+                addingParticipant={addingParticipant}
+                removingParticipantTabNum={removingParticipantTabNum}
+                canEditTeam={canEditTeam}
+                canRemoveParticipant={canRemoveParticipant}
+                onSelectedUserChange={setSelectedUserTabNum}
+                onAddParticipant={handleAddParticipant}
+                onRemoveParticipant={handleRemoveParticipant}
+              />
 
-                  <Group gap="sm" align="flex-start">
-                    <Badge variant="light" radius="sm">
-                      {statusLabel[currentTeam.status]}
-                    </Badge>
-
-                    {canEditTeam && (
-                      <>
-                        <Select
-                          placeholder="Выбери сотрудника"
-                          data={availableUsers.map((user) => ({
-                            value: String(user.tab_num),
-                            label: user.full_name,
-                          }))}
-                          value={selectedUserTabNum}
-                          onChange={setSelectedUserTabNum}
-                          size="xs"
-                          radius="md"
-                          searchable
-                          nothingFoundMessage="Нет доступных сотрудников"
-                          disabled={availableUsers.length === 0}
-                          style={{ minWidth: 220 }}
-                        />
-
-                        <Button
-                          size="xs"
-                          radius="md"
-                          color={currentStatusColor}
-                          loading={addingParticipant}
-                          disabled={!selectedUserTabNum}
-                          onClick={handleAddParticipant}
-                        >
-                          Добавить сотрудника
-                        </Button>
-                      </>
-                    )}
-                  </Group>
-                </Group>
-
-                {currentTeam.participants.length > 0 ? (
-                  <Stack gap="xs">
-                    {currentTeam.participants.map((participant) => (
-                      <Paper
-                        key={participant.tab_num}
-                        withBorder
-                        radius="lg"
-                        p="sm"
-                        bg="#faf8ff"
-                      >
-                        <Group justify="space-between" align="center">
-                          <Text size="sm" fw={600}>
-                            {participant.full_name}
-                          </Text>
-
-                          {canEditTeam && (
-                            <Button
-                              size="xs"
-                              radius="md"
-                              color="red"
-                              variant="light"
-                              loading={removingParticipantTabNum === participant.tab_num}
-                              onClick={() => handleRemoveParticipant(participant.tab_num)}
-                            >
-                              Удалить
-                            </Button>
-                          )}
-                        </Group>
-                      </Paper>
-                    ))}
-                  </Stack>
-                ) : (
-                  <Text size="sm" c="dimmed">
-                    Нет участников
-                  </Text>
-                )}
-              </Paper>
-
-              <Paper withBorder radius="xl" p="lg" bg="#ffffff">
-                <Group justify="space-between" align="center" mb="md">
-                  <Group gap="xs">
-                    <ThemeIcon variant="light" color={currentStatusColor} radius="xl">
-                      <IconMessageCircle size={16} />
-                    </ThemeIcon>
-                    <Text fw={700} size="lg">
-                      Комментарии
-                    </Text>
-                  </Group>
-
-                  <Text size="sm" c="dimmed">
-                    {currentTeam.comments.length}
-                  </Text>
-                </Group>
-
-                <Stack gap="sm" mb="md">
-                  <Textarea
-                    placeholder="Напиши комментарий..."
-                    value={commentText}
-                    onChange={(event) => setCommentText(event.currentTarget.value)}
-                    minRows={3}
-                    maxRows={6}
-                    autosize
-                    radius="lg"
-                    styles={{
-                      input: {
-                        background: '#faf8ff',
-                        borderColor: '#e9defc',
-                      },
-                    }}
-                    onKeyDown={(event) => {
-                      if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
-                        event.preventDefault();
-                        if (canSubmitComment) {
-                          handleAddComment();
-                        }
-                      }
-                    }}
-                  />
-
-                  <Group justify="space-between" align="center">
-                    <Text size="xs" c="dimmed">
-                      Ctrl/Cmd + Enter — отправить
-                    </Text>
-
-                    <Button
-                      radius="md"
-                      color={currentStatusColor}
-                      loading={commentLoading}
-                      disabled={!canSubmitComment}
-                      onClick={handleAddComment}
-                    >
-                      Добавить комментарий
-                    </Button>
-                  </Group>
-                </Stack>
-
-                {currentTeam.comments.length > 0 ? (
-                  <ScrollArea h={260} offsetScrollbars scrollbarSize={6}>
-                    <Stack gap="sm" pr={6}>
-                      {currentTeam.comments.map(renderComment)}
-                    </Stack>
-                  </ScrollArea>
-                ) : (
-                  <Paper radius="lg" p="md" bg="#faf8ff">
-                    <Text size="sm" c="dimmed">
-                      Комментариев пока нет
-                    </Text>
-                  </Paper>
-                )}
-              </Paper>
+              <TaskCommentsSection
+                currentStatusColor={currentStatusColor}
+                comments={currentTeam.comments}
+                commentText={commentText}
+                commentLoading={commentLoading}
+                deletingCommentId={deletingCommentId}
+                canCommentCurrentTeam={canCommentCurrentTeam}
+                canSubmitComment={canSubmitComment}
+                onCommentTextChange={setCommentText}
+                onAddComment={handleAddComment}
+                canDeleteComment={canDeleteComment}
+                onDeleteComment={handleDeleteComment}
+              />
             </Stack>
           ) : (
             <Paper withBorder radius="xl" p="lg">
