@@ -213,9 +213,9 @@ export default function TaskDetailsModal({
           teams: prev.teams.map((team) =>
             team.id === currentTeam.id
               ? {
-                  ...team,
-                  comments: team.comments.filter((item) => item.id !== comment.id),
-                }
+                ...team,
+                comments: team.comments.filter((item) => item.id !== comment.id),
+              }
               : team
           ),
         };
@@ -242,19 +242,31 @@ export default function TaskDetailsModal({
   const handleAddParticipant = async () => {
     if (!currentTeam || !selectedUserTabNum || !taskDetails) return;
 
+    const team = currentTeam;
+    const details = taskDetails;
+
+    if (team.participants.length >= Number(details.quota)) {
+      notifications.show({
+        title: 'Лимит участников',
+        message: 'Нельзя добавить сотрудника: квота команды уже заполнена',
+        color: 'red',
+      });
+      return;
+    }
+
     try {
       setAddingParticipant(true);
 
       await kanbanApi.addUserToTeam({
-        team_id: currentTeam.id,
+        team_id: team.id,
         tab_num: Number(selectedUserTabNum),
       });
 
-      const nextParticipantsCount = currentTeam.participants.length + 1;
+      const nextParticipantsCount = team.participants.length + 1;
 
       onTaskTeamChanged({
-        taskId: taskDetails.id,
-        teamId: currentTeam.id,
+        taskId: details.id,
+        teamId: team.id,
         participantsCount: nextParticipantsCount,
       });
 

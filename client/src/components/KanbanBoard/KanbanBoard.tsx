@@ -57,9 +57,11 @@ export default function KanbanBoard() {
 
   const { currentUser } = useAppAuth();
 
-  const canCreateTask =
+  const isManager =
     currentUser.role_name === 'Руководитель' ||
     currentUser.role_name === 'Администратор';
+
+  const canCreateTask = isManager;
 
   const loadTasks = async (withLoader = false) => {
     try {
@@ -151,6 +153,10 @@ export default function KanbanBoard() {
       return;
     }
 
+    const isManager =
+      currentUser.role_name === 'Руководитель' ||
+      currentUser.role_name === 'Администратор';
+
     try {
       setIsDroppingTask(true);
 
@@ -163,10 +169,35 @@ export default function KanbanBoard() {
             }),
           'Задача взята в работу'
         );
-      } else if (
-        draggedTask.board_status === 'inProgress' &&
-        targetStatus === 'backlog'
-      ) {
+        return;
+      }
+
+      if (draggedTask.board_status === 'inProgress' && targetStatus === 'backlog') {
+        if (!isManager) {
+          const taskDetails = await kanbanApi.getTaskDetails(
+            draggedTask.id,
+            draggedTask.team_id
+          );
+
+          const currentTeam =
+            taskDetails.teams.find(
+              (team) => Number(team.id) === Number(draggedTask.team_id)
+            ) ?? null;
+
+          const isParticipant =
+            currentTeam?.participants.some(
+              (participant) =>
+                Number(participant.tab_num) === Number(currentUser.tab_num)
+            ) ?? false;
+
+          if (!isParticipant) {
+            showError(
+              'Вернуть задачу в бэклог может только участник, администратор или руководитель'
+            );
+            return;
+          }
+        }
+
         await runDropAction(
           () =>
             kanbanApi.returnTaskToBacklog({
@@ -174,18 +205,6 @@ export default function KanbanBoard() {
               team_id: draggedTask.team_id!,
             }),
           'Задача возвращена в бэклог'
-        );
-      } else if (
-        draggedTask.board_status === 'inProgress' &&
-        targetStatus === 'review'
-      ) {
-        await runDropAction(
-          () =>
-            kanbanApi.changeTeamStatus({
-              team_id: draggedTask.team_id!,
-              status: 'review',
-            }),
-          'Задача переведена на проверку'
         );
       }
     } catch (err) {

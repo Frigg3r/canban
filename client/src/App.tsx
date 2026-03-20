@@ -23,6 +23,7 @@ export function useAppAuth() {
 }
 
 export default function App() {
+  // пока захардкодил
   const currentTabNum = 1001;
 
   const [currentUser, setCurrentUser] = useState<KanbanCurrentUser | null>(null);
