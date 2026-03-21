@@ -72,7 +72,8 @@ export interface AddUserToTeamPayload {
 
 export interface KanbanAvailableUser {
   tab_num: number;
-  full_name: string;
+  fio: string;
+  email: string;
 }
 
 export interface RemoveUserFromTeamPayload {
@@ -96,4 +97,11 @@ export interface ReturnTaskToBacklogPayload {
 export interface ChangeTeamStatusPayload {
   team_id: number;
   status: TeamWorkflowStatus;
+}
+
+export interface AddUserPayload {
+  tab_num: number;
+  fio: string;
+  email: string;
+  role_id: number;
 }

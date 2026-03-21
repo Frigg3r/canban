@@ -12,6 +12,8 @@ import TaskCard from '../TaskCard/TaskCard';
 import CreateTaskModal from '../CreateTaskModal/CreateTaskModal';
 import TaskDetailsModal from '../TaskDetailsModal/TaskDetailsModal';
 
+import CreateUserModal from '../CreateUserModal/CreateUserModal';
+
 import { useAppAuth } from '../../App';
 
 const boardColumns: KanbanStatus[] = ['backlog', 'inProgress', 'review', 'done'];
@@ -48,6 +50,7 @@ export default function KanbanBoard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [createTaskOpened, setCreateTaskOpened] = useState(false);
+  const [createUserOpened, setCreateUserOpened] = useState(false);
   const [selectedTask, setSelectedTask] = useState<{
     taskId: number;
     teamId: number | null;
@@ -244,6 +247,7 @@ export default function KanbanBoard() {
       <KanbanActions
         canCreateTask={canCreateTask}
         onCreateTaskClick={() => setCreateTaskOpened(true)}
+        onCreateUserClick={() => setCreateUserOpened(true)}
       />
 
       <Grid gutter="md" align="stretch">
@@ -282,6 +286,11 @@ export default function KanbanBoard() {
         opened={createTaskOpened}
         onClose={() => setCreateTaskOpened(false)}
         onSubmit={handleCreateTaskSubmit}
+      />
+
+      <CreateUserModal
+        opened={createUserOpened}
+        onClose={() => setCreateUserOpened(false)}
       />
 
       <TaskDetailsModal
