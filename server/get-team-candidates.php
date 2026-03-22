@@ -30,7 +30,7 @@ if ($taskId <= 0) {
 $query = "
     select
         u.tab_num,
-        u.fio as full_name
+        u.fio
     from canban.canban_user u
     where u.tab_num not in (
         select cut.tab_num

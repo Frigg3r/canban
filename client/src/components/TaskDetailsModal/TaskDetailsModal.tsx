@@ -31,6 +31,7 @@ import {
   getCanEditTeam,
   getCanRemoveParticipant,
   getCanSubmitComment,
+  getCanReviewTeam
 } from './taskDetails.permissions';
 import { useAppAuth } from '../../App';
 
@@ -45,6 +46,7 @@ interface TaskDetailsModalProps {
     participantsCount: number;
   }) => void;
   onTaskArchived: (taskId: number) => void;
+  onTaskStatusChanged: () => void | Promise<void>;
 }
 
 export default function TaskDetailsModal({
@@ -54,6 +56,7 @@ export default function TaskDetailsModal({
   onClose,
   onTaskTeamChanged,
   onTaskArchived,
+  onTaskStatusChanged,
 }: TaskDetailsModalProps) {
   const [taskDetails, setTaskDetails] = useState<KanbanTaskDetails | null>(null);
   const [loading, setLoading] = useState(false);
@@ -65,6 +68,7 @@ export default function TaskDetailsModal({
   const [availableUsers, setAvailableUsers] = useState<KanbanAvailableUser[]>([]);
   const [selectedUserTabNum, setSelectedUserTabNum] = useState<string | null>(null);
   const [archiving, setArchiving] = useState(false);
+  const [reviewLoading, setReviewLoading] = useState(false);
 
   const { currentUser } = useAppAuth();
 
@@ -130,6 +134,7 @@ export default function TaskDetailsModal({
   const canArchiveTask = getCanArchiveTask(currentUser, currentStatusKey);
   const canCommentCurrentTeam = getCanCommentCurrentTeam(currentTeam, currentUser);
   const canEditTeam = getCanEditTeam(isBacklogView, currentTeam, canCommentCurrentTeam);
+  const canReviewTeam = getCanReviewTeam(currentUser, currentTeam);
 
   const canRemoveParticipant = (tabNum: number) =>
     getCanRemoveParticipant(currentUser, tabNum);
@@ -242,10 +247,11 @@ export default function TaskDetailsModal({
   const handleAddParticipant = async () => {
     if (!currentTeam || !selectedUserTabNum || !taskDetails) return;
 
-    const team = currentTeam;
-    const details = taskDetails;
+    const teamId = Number(currentTeam.id);
+    const taskId = Number(taskDetails.id);
+    const selectedTabNum = Number(selectedUserTabNum);
 
-    if (team.participants.length >= Number(details.quota)) {
+    if (currentTeam.participants.length >= Number(taskDetails.quota)) {
       notifications.show({
         title: 'Лимит участников',
         message: 'Нельзя добавить сотрудника: квота команды уже заполнена',
@@ -254,25 +260,53 @@ export default function TaskDetailsModal({
       return;
     }
 
+    const addedUser = availableUsers.find(
+      (user) => Number(user.tab_num) === selectedTabNum
+    );
+
+    if (!addedUser) return;
+
     try {
       setAddingParticipant(true);
 
       await kanbanApi.addUserToTeam({
-        team_id: team.id,
-        tab_num: Number(selectedUserTabNum),
+        team_id: teamId,
+        tab_num: selectedTabNum,
       });
 
-      const nextParticipantsCount = team.participants.length + 1;
+      setTaskDetails((prev) => {
+        if (!prev) return prev;
+
+        return {
+          ...prev,
+          teams: prev.teams.map((team) =>
+            Number(team.id) === teamId
+              ? {
+                ...team,
+                participants: [
+                  ...team.participants,
+                  {
+                    tab_num: addedUser.tab_num,
+                    fio: addedUser.fio,
+                  },
+                ],
+              }
+              : team
+          ),
+        };
+      });
+
+      setAvailableUsers((prev) =>
+        prev.filter((user) => Number(user.tab_num) !== selectedTabNum)
+      );
+
+      setSelectedUserTabNum(null);
 
       onTaskTeamChanged({
-        taskId: details.id,
-        teamId: team.id,
-        participantsCount: nextParticipantsCount,
+        taskId,
+        teamId,
+        participantsCount: currentTeam.participants.length + 1,
       });
-
-      await loadTaskDetails();
-      await loadAvailableUsers();
-      setSelectedUserTabNum(null);
 
       notifications.show({
         title: 'Успешно',
@@ -293,24 +327,150 @@ export default function TaskDetailsModal({
     }
   };
 
+  const handleApproveTeam = async () => {
+    if (!currentTeam || !taskDetails || !canReviewTeam) return;
+
+    try {
+      setReviewLoading(true);
+
+      await kanbanApi.changeTeamStatus({
+        team_id: Number(currentTeam.id),
+        status: 'done',
+      });
+
+      setTaskDetails((prev) => {
+        if (!prev) return prev;
+
+        return {
+          ...prev,
+          board_status: 'done',
+          teams: prev.teams.map((team) =>
+            Number(team.id) === Number(currentTeam.id)
+              ? { ...team, status: 'done' }
+              : team
+          ),
+        };
+      });
+
+      await onTaskStatusChanged();
+
+      notifications.show({
+        title: 'Успешно',
+        message: 'Карточка принята',
+        color: 'teal',
+        autoClose: 2000,
+      });
+    } catch (error) {
+      console.error('Ошибка подтверждения карточки:', error);
+
+      notifications.show({
+        title: 'Ошибка',
+        message: error instanceof Error ? error.message : 'Не удалось принять карточку',
+        color: 'red',
+      });
+    } finally {
+      setReviewLoading(false);
+    }
+  };
+
+  const handleReturnToWork = async () => {
+    if (!currentTeam || !taskDetails || !canReviewTeam) return;
+
+    try {
+      setReviewLoading(true);
+
+      await kanbanApi.changeTeamStatus({
+        team_id: Number(currentTeam.id),
+        status: 'inProgress',
+      });
+
+      setTaskDetails((prev) => {
+        if (!prev) return prev;
+
+        return {
+          ...prev,
+          board_status: 'inProgress',
+          teams: prev.teams.map((team) =>
+            Number(team.id) === Number(currentTeam.id)
+              ? { ...team, status: 'inProgress' }
+              : team
+          ),
+        };
+      });
+
+      await onTaskStatusChanged();
+
+      notifications.show({
+        title: 'Успешно',
+        message: 'Карточка отправлена на доработку',
+        color: 'blue',
+        autoClose: 2000,
+      });
+    } catch (error) {
+      console.error('Ошибка возврата карточки в работу:', error);
+
+      notifications.show({
+        title: 'Ошибка',
+        message: error instanceof Error ? error.message : 'Не удалось вернуть карточку в работу',
+        color: 'red',
+      });
+    } finally {
+      setReviewLoading(false);
+    }
+  };
+
   const handleRemoveParticipant = async (tabNum: number) => {
     if (!currentTeam || !taskDetails || !canRemoveParticipant(tabNum)) return;
+
+    const teamId = Number(currentTeam.id);
+    const taskId = Number(taskDetails.id);
+    const nextParticipantsCount = Math.max(currentTeam.participants.length - 1, 0);
 
     try {
       setRemovingParticipantTabNum(tabNum);
 
       await kanbanApi.removeUserFromTeam({
-        team_id: Number(currentTeam.id),
+        team_id: teamId,
         tab_num: Number(tabNum),
       });
 
-      const nextParticipantsCount = Math.max(currentTeam.participants.length - 1, 0);
+      setTaskDetails((prev) => {
+        if (!prev) return prev;
+
+        return {
+          ...prev,
+          teams: prev.teams.map((team) =>
+            Number(team.id) === teamId
+              ? {
+                ...team,
+                participants: team.participants.filter(
+                  (participant) => Number(participant.tab_num) !== Number(tabNum)
+                ),
+              }
+              : team
+          ),
+        };
+      });
 
       onTaskTeamChanged({
-        taskId: Number(taskDetails.id),
-        teamId: Number(currentTeam.id),
+        taskId,
+        teamId,
         participantsCount: nextParticipantsCount,
       });
+
+      if (nextParticipantsCount === 0) {
+        notifications.show({
+          title: 'Успешно',
+          message: 'Сотрудник удалён из команды',
+          color: currentStatusColor,
+          autoClose: 2000,
+        });
+
+        onClose();
+        return;
+      }
+
+      await loadAvailableUsers();
 
       notifications.show({
         title: 'Успешно',
@@ -318,14 +478,6 @@ export default function TaskDetailsModal({
         color: currentStatusColor,
         autoClose: 2000,
       });
-
-      if (nextParticipantsCount === 0) {
-        onClose();
-        return;
-      }
-
-      await loadTaskDetails();
-      await loadAvailableUsers();
     } catch (error) {
       console.error('Ошибка удаления сотрудника:', error);
 
@@ -425,6 +577,10 @@ export default function TaskDetailsModal({
             canArchiveTask={canArchiveTask}
             archiving={archiving}
             onArchive={handleArchiveTask}
+            canReviewTeam={canReviewTeam}
+            reviewLoading={reviewLoading}
+            onApprove={handleApproveTeam}
+            onReturnToWork={handleReturnToWork}
           />
 
           <TaskInfoCards
@@ -463,7 +619,7 @@ export default function TaskDetailsModal({
                             bg="#faf8ff"
                           >
                             <Text size="sm" fw={600}>
-                              {participant.full_name}
+                              {participant.fio}
                             </Text>
                           </Paper>
                         ))}

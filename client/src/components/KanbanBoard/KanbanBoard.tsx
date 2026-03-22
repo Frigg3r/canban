@@ -120,6 +120,10 @@ export default function KanbanBoard() {
     );
   };
 
+  const handleTaskStatusChanged = async () => {
+    await loadTasks();
+  };
+
   // скрываем архивированную карточку
   const handleTaskArchived = (taskId: number) => {
     setTasks((prev) => prev.filter((task) => Number(task.id) !== Number(taskId)));
@@ -175,6 +179,18 @@ export default function KanbanBoard() {
         return;
       }
 
+      if (draggedTask.board_status === 'inProgress' && targetStatus === 'review') {
+        await runDropAction(
+          () =>
+            kanbanApi.changeTeamStatus({
+              team_id: draggedTask.team_id!,
+              status: 'review',
+            }),
+          'Задача отправлена на проверку'
+        );
+        return;
+      }
+
       if (draggedTask.board_status === 'inProgress' && targetStatus === 'backlog') {
         if (!isManager) {
           const taskDetails = await kanbanApi.getTaskDetails(
@@ -209,6 +225,8 @@ export default function KanbanBoard() {
             }),
           'Задача возвращена в бэклог'
         );
+
+        return;
       }
     } catch (err) {
       console.error('Ошибка изменения статуса задачи:', err);
@@ -300,6 +318,7 @@ export default function KanbanBoard() {
         onClose={() => setSelectedTask(null)}
         onTaskTeamChanged={handleTaskTeamChanged}
         onTaskArchived={handleTaskArchived}
+        onTaskStatusChanged={handleTaskStatusChanged}
       />
     </Box>
   );

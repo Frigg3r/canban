@@ -48,7 +48,7 @@ export default function TaskTeamSection({
                 placeholder="Выбери сотрудника"
                 data={availableUsers.map((user) => ({
                   value: String(user.tab_num),
-                  label: user.full_name,
+                  label: user.fio,
                 }))}
                 value={selectedUserTabNum}
                 onChange={onSelectedUserChange}
@@ -87,7 +87,7 @@ export default function TaskTeamSection({
             >
               <Group justify="space-between" align="center">
                 <Text size="sm" fw={600}>
-                  {participant.full_name}
+                  {participant.fio}
                 </Text>
 
                 {canRemoveParticipant(participant.tab_num) && (

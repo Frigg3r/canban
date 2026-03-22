@@ -5,15 +5,18 @@ interface CurrentUserLike {
   role_name: string;
 }
 
+function getIsManager(currentUser: CurrentUserLike) {
+  return (
+    currentUser.role_name === 'Руководитель' ||
+    currentUser.role_name === 'Администратор'
+  );
+}
+
 export function getCanArchiveTask(
   currentUser: CurrentUserLike,
   currentStatusKey: string
 ) {
-  const isManager =
-    currentUser.role_name === 'Руководитель' ||
-    currentUser.role_name === 'Администратор';
-
-  return isManager && (currentStatusKey === 'backlog' || currentStatusKey === 'done');
+  return getIsManager(currentUser) && (currentStatusKey === 'backlog' || currentStatusKey === 'done');
 }
 
 export function getCanCommentCurrentTeam(
@@ -35,10 +38,16 @@ export function getCanEditTeam(
   return !isBacklogView && currentTeam?.status === 'inProgress' && canCommentCurrentTeam;
 }
 
+export function getCanReviewTeam(
+  currentUser: CurrentUserLike,
+  currentTeam: KanbanTeamDetails | null
+) {
+  return getIsManager(currentUser) && currentTeam?.status === 'review';
+}
+
 export function getCanRemoveParticipant(currentUser: CurrentUserLike, tabNum: number) {
   return (
-    currentUser.role_name === 'Руководитель' ||
-    currentUser.role_name === 'Администратор' ||
+    getIsManager(currentUser) ||
     Number(tabNum) === Number(currentUser.tab_num)
   );
 }

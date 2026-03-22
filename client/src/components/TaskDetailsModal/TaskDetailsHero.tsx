@@ -1,5 +1,14 @@
-import { Badge, Button, Group, Paper, Stack, Text } from '@mantine/core';
-import { IconArchive } from '@tabler/icons-react';
+import {
+  ActionIcon,
+  Badge,
+  Button,
+  Group,
+  Paper,
+  Stack,
+  Text,
+  Tooltip,
+} from '@mantine/core';
+import { IconArchive, IconCheck, IconX } from '@tabler/icons-react';
 import styles from './TaskDetailsModal.module.css';
 
 interface TaskDetailsHeroProps {
@@ -10,6 +19,10 @@ interface TaskDetailsHeroProps {
   canArchiveTask: boolean;
   archiving: boolean;
   onArchive: () => void;
+  canReviewTeam: boolean;
+  reviewLoading: boolean;
+  onApprove: () => void;
+  onReturnToWork: () => void;
 }
 
 export default function TaskDetailsHero({
@@ -20,6 +33,10 @@ export default function TaskDetailsHero({
   canArchiveTask,
   archiving,
   onArchive,
+  canReviewTeam,
+  reviewLoading,
+  onApprove,
+  onReturnToWork,
 }: TaskDetailsHeroProps) {
   return (
     <Paper radius="xl" p="lg" className={styles.heroCard}>
@@ -44,18 +61,52 @@ export default function TaskDetailsHero({
             {score} баллов
           </Badge>
 
-          {canArchiveTask && (
-            <Button
-              size="xs"
-              radius="md"
-              variant="light"
-              color={currentStatusColor}
-              leftSection={<IconArchive size={14} />}
-              loading={archiving}
-              onClick={onArchive}
-            >
-              В архив
-            </Button>
+          {(canReviewTeam || canArchiveTask) && (
+            <Group gap="xs">
+              {canReviewTeam && (
+                <>
+                  <Tooltip label="Принять" withArrow>
+                    <ActionIcon
+                      size="lg"
+                      radius="md"
+                      variant="light"
+                      color="teal"
+                      loading={reviewLoading}
+                      onClick={onApprove}
+                    >
+                      <IconCheck size={18} />
+                    </ActionIcon>
+                  </Tooltip>
+
+                  <Tooltip label="Отправить на доработку" withArrow>
+                    <ActionIcon
+                      size="lg"
+                      radius="md"
+                      variant="light"
+                      color="red"
+                      loading={reviewLoading}
+                      onClick={onReturnToWork}
+                    >
+                      <IconX size={18} />
+                    </ActionIcon>
+                  </Tooltip>
+                </>
+              )}
+
+              {canArchiveTask && (
+                <Button
+                  size="xs"
+                  radius="md"
+                  variant="light"
+                  color={currentStatusColor}
+                  leftSection={<IconArchive size={14} />}
+                  loading={archiving}
+                  onClick={onArchive}
+                >
+                  В архив
+                </Button>
+              )}
+            </Group>
           )}
         </Stack>
       </Group>

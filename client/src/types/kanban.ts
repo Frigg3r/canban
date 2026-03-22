@@ -24,7 +24,7 @@ export interface CreateTaskPayload {
 
 export interface KanbanTeamParticipant {
   tab_num: number;
-  full_name: string;
+  fio: string;
 }
 
 export interface KanbanComment {
