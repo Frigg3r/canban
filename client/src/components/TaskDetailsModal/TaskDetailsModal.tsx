@@ -40,11 +40,7 @@ interface TaskDetailsModalProps {
   taskId: number | null;
   teamId: number | null;
   onClose: () => void;
-  onTaskTeamChanged: (payload: {
-    taskId: number;
-    teamId: number | null;
-    participantsCount: number;
-  }) => void;
+  onTaskTeamChanged: () => void | Promise<void>;
   onTaskArchived: (taskId: number) => void;
   onTaskStatusChanged: () => void | Promise<void>;
 }
@@ -248,7 +244,6 @@ export default function TaskDetailsModal({
     if (!currentTeam || !selectedUserTabNum || !taskDetails) return;
 
     const teamId = Number(currentTeam.id);
-    const taskId = Number(taskDetails.id);
     const selectedTabNum = Number(selectedUserTabNum);
 
     if (currentTeam.participants.length >= Number(taskDetails.quota)) {
@@ -302,11 +297,7 @@ export default function TaskDetailsModal({
 
       setSelectedUserTabNum(null);
 
-      onTaskTeamChanged({
-        taskId,
-        teamId,
-        participantsCount: currentTeam.participants.length + 1,
-      });
+      await onTaskTeamChanged();
 
       notifications.show({
         title: 'Успешно',
@@ -423,7 +414,6 @@ export default function TaskDetailsModal({
     if (!currentTeam || !taskDetails || !canRemoveParticipant(tabNum)) return;
 
     const teamId = Number(currentTeam.id);
-    const taskId = Number(taskDetails.id);
     const nextParticipantsCount = Math.max(currentTeam.participants.length - 1, 0);
 
     try {
@@ -452,11 +442,7 @@ export default function TaskDetailsModal({
         };
       });
 
-      onTaskTeamChanged({
-        taskId,
-        teamId,
-        participantsCount: nextParticipantsCount,
-      });
+      await onTaskTeamChanged();
 
       if (nextParticipantsCount === 0) {
         notifications.show({

@@ -13,6 +13,7 @@ import type {
   RemoveUserFromTeamPayload,
   ReturnTaskToBacklogPayload,
   TakeTaskPayload,
+  KanbanRatingUser,
 } from '../types/kanban';
 
 // добавил тип ответа сервера
@@ -156,6 +157,18 @@ class KanbanApi extends BaseApi {
       method: 'POST',
       body: JSON.stringify(payload),
     });
+  }
+
+  // рейтинг
+  getRating(year: number, quarter: number) {
+    const query = new URLSearchParams({
+      year: String(year),
+      quarter: String(quarter),
+    });
+
+    return this.requestData<KanbanRatingUser[]>(
+      `/get-rating.php?${query.toString()}`
+    );
   }
 }
 

@@ -4,7 +4,8 @@ import { Notifications } from '@mantine/notifications';
 import { DatesProvider } from '@mantine/dates';
 import { kanbanApi } from './api/kanban';
 import type { KanbanCurrentUser } from './types/kanban';
-import KanbanPage from './pages/KanbanPage/KanbanPage';
+import KanbanBoard from './components/KanbanBoard/KanbanBoard';
+import RatingPage from './pages/RatingPage/RatingPage';
 
 interface AppAuthContextValue {
   currentUser: KanbanCurrentUser;
@@ -22,13 +23,16 @@ export function useAppAuth() {
   return context;
 }
 
+type AppView = 'kanban' | 'rating';
+
 export default function App() {
   // пока захардкодил
-  const currentTabNum = 1001;
+  const currentTabNum = 1002;
 
   const [currentUser, setCurrentUser] = useState<KanbanCurrentUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [view, setView] = useState<AppView>('kanban');
 
   useEffect(() => {
     const loadCurrentUser = async () => {
@@ -84,7 +88,11 @@ export default function App() {
             currentUser,
           }}
         >
-          <KanbanPage />
+          {view === 'kanban' ? (
+            <KanbanBoard onRatingClick={() => setView('rating')} />
+          ) : (
+            <RatingPage onBackClick={() => setView('kanban')} />
+          )}
         </AppAuthContext.Provider>
       </DatesProvider>
     </MantineProvider>

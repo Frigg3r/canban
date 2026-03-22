@@ -45,7 +45,11 @@ const groupTasksByStatus = (tasks: KanbanTask[]) => {
   };
 };
 
-export default function KanbanBoard() {
+export default function KanbanBoard({
+  onRatingClick,
+}: {
+  onRatingClick: () => void;
+}) {
   const [tasks, setTasks] = useState<KanbanTask[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -97,27 +101,8 @@ export default function KanbanBoard() {
     showSuccess(successMessage);
   };
 
-  const handleTaskTeamChanged = async ({
-    taskId,
-    teamId,
-    participantsCount,
-  }: {
-    taskId: number;
-    teamId: number | null;
-    participantsCount: number;
-  }) => {
-    if (participantsCount === 0) {
-      await loadTasks();
-      return;
-    }
-
-    setTasks((prev) =>
-      prev.map((task) =>
-        task.id === taskId && task.team_id === teamId
-          ? { ...task, participants_count: participantsCount }
-          : task
-      )
-    );
+  const handleTaskTeamChanged = async () => {
+    await loadTasks();
   };
 
   const handleTaskStatusChanged = async () => {
@@ -260,7 +245,7 @@ export default function KanbanBoard() {
 
   return (
     <Box className={styles.boardPage}>
-      <KanbanHeader />
+      <KanbanHeader onRatingClick={onRatingClick} />
 
       <KanbanActions
         canCreateTask={canCreateTask}

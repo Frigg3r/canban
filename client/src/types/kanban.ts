@@ -105,3 +105,13 @@ export interface AddUserPayload {
   email: string;
   role_id: number;
 }
+
+export interface KanbanRatingUser {
+  place: number;
+  tab_num: number;
+  fio: string;
+  email: string;
+  role_id: number;
+  role_name: string;
+  total_score: number;
+}
