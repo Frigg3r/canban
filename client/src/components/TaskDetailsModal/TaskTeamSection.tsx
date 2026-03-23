@@ -14,6 +14,7 @@ interface TaskTeamSectionProps {
   onSelectedUserChange: (value: string | null) => void;
   onAddParticipant: () => void;
   onRemoveParticipant: (tabNum: number) => void;
+  isApprovedTeam?: boolean;
 }
 
 export default function TaskTeamSection({
@@ -29,16 +30,29 @@ export default function TaskTeamSection({
   onSelectedUserChange,
   onAddParticipant,
   onRemoveParticipant,
+  isApprovedTeam = false,
 }: TaskTeamSectionProps) {
   return (
-    <Paper withBorder radius="xl" p="md" bg="#ffffff">
+    <Paper
+      withBorder
+      radius="xl"
+      p="md"
+      bg={isApprovedTeam ? '#f4fbf6' : '#ffffff'}
+      style={{
+        borderColor: isApprovedTeam ? '#cfe9d6' : undefined,
+      }}
+    >
       <Group justify="space-between" align="center" mb="xs">
         <Text fw={700} size="lg">
           Команда #{team.id}
         </Text>
 
         <Group gap="sm" align="flex-start">
-          <Badge variant="light" radius="sm">
+          <Badge
+            variant="light"
+            radius="sm"
+            color={isApprovedTeam ? 'teal' : undefined}
+          >
             {statusLabel[team.status]}
           </Badge>
 
@@ -83,7 +97,10 @@ export default function TaskTeamSection({
               withBorder
               radius="lg"
               p="sm"
-              bg="#faf8ff"
+              bg={isApprovedTeam ? '#eef8f1' : '#faf8ff'}
+              style={{
+                borderColor: isApprovedTeam ? '#d8ecde' : undefined,
+              }}
             >
               <Group justify="space-between" align="center">
                 <Text size="sm" fw={600}>

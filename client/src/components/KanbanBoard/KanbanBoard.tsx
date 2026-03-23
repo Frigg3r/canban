@@ -22,7 +22,7 @@ const showSuccess = (message: string) => {
   notifications.show({
     title: 'Успешно',
     message,
-    autoClose: 2000,
+    autoClose: 1400,
     color: 'violet',
   });
 };

@@ -170,6 +170,20 @@ class KanbanApi extends BaseApi {
       `/get-rating.php?${query.toString()}`
     );
   }
+
+  // принять результат команды
+  approveTeamResult(teamId: number, approvedByTabNum: number) {
+    return this.requestData<{ task_id: number; team_id: number }>(
+      '/approve-team-result.php',
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          team_id: teamId,
+          approved_by_tab_num: approvedByTabNum,
+        }),
+      }
+    );
+  }
 }
 
 export const kanbanApi = new KanbanApi();

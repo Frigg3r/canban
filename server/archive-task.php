@@ -22,7 +22,6 @@ $_POST = json_decode(file_get_contents("php://input"), true);
 $taskId = (int)($_POST['task_id'] ?? 0);
 
 if ($taskId <= 0) {
-    http_response_code(400);
     echo json_encode([
         'ok' => false,
         'message' => 'Некорректный task_id',
@@ -30,7 +29,6 @@ if ($taskId <= 0) {
     exit;
 }
 
-// получаем текущий статус и архивность задачи
 $taskQuery = "
     select
         id,
@@ -44,7 +42,8 @@ $taskQuery = "
 $taskResult = $pg_db->Query($taskQuery, true);
 
 if (!$taskResult || !isset($taskResult[0])) {
-    http_response_code(404);
+    $pg_db->Close();
+
     echo json_encode([
         'ok' => false,
         'message' => 'Задача не найдена',
@@ -56,8 +55,9 @@ $task = $taskResult[0];
 $statusId = (int)$task['status_id'];
 $isArchived = filter_var($task['is_archived'], FILTER_VALIDATE_BOOLEAN);
 
-// если уже в архиве
 if ($isArchived) {
+    $pg_db->Close();
+
     echo json_encode([
         'ok' => true,
         'message' => 'Задача уже в архиве',
@@ -65,12 +65,32 @@ if ($isArchived) {
     exit;
 }
 
-// разрешаем архивировать только backlog (1) и done (4)
-if (!in_array($statusId, [1, 4], true)) {
-    http_response_code(400);
+if (!in_array($statusId, [1, 3], true)) {
+    $pg_db->Close();
+
     echo json_encode([
         'ok' => false,
         'message' => 'Можно архивировать только задачи из бэклога или выполненные задачи',
+    ], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+$activeTeamQuery = "
+    select 1
+    from canban.canban_team
+    where task_id = $taskId
+      and status_id in (1, 2)
+    limit 1
+";
+
+$activeTeamResult = $pg_db->Query($activeTeamQuery, true);
+
+if ($activeTeamResult && count($activeTeamResult) > 0) {
+    $pg_db->Close();
+
+    echo json_encode([
+        'ok' => false,
+        'message' => 'Нельзя архивировать карточку, пока она находится в работе или на проверке',
     ], JSON_UNESCAPED_UNICODE);
     exit;
 }
@@ -82,7 +102,6 @@ $archiveTaskQuery = "
 ";
 
 $pg_db->Query($archiveTaskQuery);
-
 $pg_db->Close();
 
 echo json_encode([

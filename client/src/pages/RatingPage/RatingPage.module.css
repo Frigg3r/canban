@@ -1,0 +1,53 @@
+.page {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(139, 92, 246, 0.1), transparent 24%),
+    linear-gradient(180deg, #f7f7fb 0%, #eef2f8 100%);
+  padding: 24px 0 40px;
+}
+
+.heroCard {
+  background: linear-gradient(135deg, #ffffff 0%, #f7f1ff 100%);
+  border-color: #eadfff;
+  box-shadow: 0 16px 40px rgba(88, 63, 145, 0.08);
+}
+
+.yearBadge {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: #e5dbfb;
+}
+
+.statCard {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: #ebe7f7;
+}
+
+.tableCard {
+  background: rgba(255, 255, 255, 0.94);
+  border-color: #ebe7f7;
+  box-shadow: 0 10px 24px rgba(88, 63, 145, 0.06);
+}
+
+.podiumCard {
+  height: 100%;
+}
+
+.podiumRaised {
+  transform: translateY(-10px);
+}
+
+.scoreBox {
+  background: #f8f5ff;
+}
+
+.placeBox {
+  display: inline-flex;
+  min-width: 32px;
+  height: 28px;
+  padding: 0 10px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-weight: 800;
+  line-height: 1;
+}

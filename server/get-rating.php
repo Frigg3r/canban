@@ -43,7 +43,7 @@ $query = "
     select
         row_number() over (
             order by coalesce(sum(csa.score), 0) desc, cu.fio asc
-        ) as place,
+        )::integer as place,
         cu.tab_num,
         cu.fio,
         cu.email,

@@ -132,6 +132,9 @@ export default function TaskDetailsModal({
   const canEditTeam = getCanEditTeam(isBacklogView, currentTeam, canCommentCurrentTeam);
   const canReviewTeam = getCanReviewTeam(currentUser, currentTeam);
 
+  const isApprovedTeam =
+  Boolean(currentTeam && Number(taskDetails?.approved_team_id) === Number(currentTeam.id));
+
   const canRemoveParticipant = (tabNum: number) =>
     getCanRemoveParticipant(currentUser, tabNum);
 
@@ -176,7 +179,7 @@ export default function TaskDetailsModal({
         title: 'Успешно',
         message: 'Комментарий добавлен',
         color: currentStatusColor,
-        autoClose: 2000,
+        autoClose: 1400,
       });
     } catch (error) {
       console.error('Ошибка добавления комментария:', error);
@@ -226,7 +229,7 @@ export default function TaskDetailsModal({
         title: 'Успешно',
         message: 'Комментарий удалён',
         color: currentStatusColor,
-        autoClose: 2000,
+        autoClose: 1400,
       });
     } catch (error) {
       console.error('Ошибка удаления комментария:', error);
@@ -303,7 +306,7 @@ export default function TaskDetailsModal({
         title: 'Успешно',
         message: 'Сотрудник добавлен в команду',
         color: currentStatusColor,
-        autoClose: 2000,
+        autoClose: 1400,
       });
     } catch (error) {
       console.error('Ошибка добавления сотрудника:', error);
@@ -324,10 +327,10 @@ export default function TaskDetailsModal({
     try {
       setReviewLoading(true);
 
-      await kanbanApi.changeTeamStatus({
-        team_id: Number(currentTeam.id),
-        status: 'done',
-      });
+      await kanbanApi.approveTeamResult(
+        Number(currentTeam.id),
+        Number(currentUser.tab_num)
+      );
 
       setTaskDetails((prev) => {
         if (!prev) return prev;
@@ -349,7 +352,7 @@ export default function TaskDetailsModal({
         title: 'Успешно',
         message: 'Карточка принята',
         color: 'teal',
-        autoClose: 2000,
+        autoClose: 1400,
       });
     } catch (error) {
       console.error('Ошибка подтверждения карточки:', error);
@@ -395,7 +398,7 @@ export default function TaskDetailsModal({
         title: 'Успешно',
         message: 'Карточка отправлена на доработку',
         color: 'blue',
-        autoClose: 2000,
+        autoClose: 1400,
       });
     } catch (error) {
       console.error('Ошибка возврата карточки в работу:', error);
@@ -449,7 +452,7 @@ export default function TaskDetailsModal({
           title: 'Успешно',
           message: 'Сотрудник удалён из команды',
           color: currentStatusColor,
-          autoClose: 2000,
+          autoClose: 1400,
         });
 
         onClose();
@@ -462,7 +465,7 @@ export default function TaskDetailsModal({
         title: 'Успешно',
         message: 'Сотрудник удалён из команды',
         color: currentStatusColor,
-        autoClose: 2000,
+        autoClose: 1400,
       });
     } catch (error) {
       console.error('Ошибка удаления сотрудника:', error);
@@ -491,7 +494,7 @@ export default function TaskDetailsModal({
         title: 'Успешно',
         message: 'Карточка отправлена в архив',
         color: currentStatusColor,
-        autoClose: 2000,
+        autoClose: 1400,
       });
 
       onClose();
@@ -574,6 +577,8 @@ export default function TaskDetailsModal({
             quota={taskDetails.quota}
             teamsCount={taskDetails.teams.length}
             currentStatusColor={currentStatusColor}
+            approvedByName={taskDetails.approved_by_name}
+            approvedAt={taskDetails.approved_at}
           />
 
           <Divider />
@@ -640,6 +645,7 @@ export default function TaskDetailsModal({
                 onSelectedUserChange={setSelectedUserTabNum}
                 onAddParticipant={handleAddParticipant}
                 onRemoveParticipant={handleRemoveParticipant}
+                isApprovedTeam={isApprovedTeam}
               />
 
               <TaskCommentsSection

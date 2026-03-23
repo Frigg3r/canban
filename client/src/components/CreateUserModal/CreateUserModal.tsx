@@ -83,7 +83,7 @@ export default function CreateUserModal({
         title: 'Успешно',
         message: 'Сотрудник добавлен в систему',
         color: 'violet',
-        autoClose: 2000,
+        autoClose: 1400,
       });
 
       await loadUsers();

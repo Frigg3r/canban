@@ -17,14 +17,38 @@ if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
 
 require_once(__DIR__ . '/utils/pg.connect.php');
 
-$_POST = json_decode(file_get_contents("php://input"), true);
+$data = json_decode(file_get_contents("php://input"), true);
 
-$teamId = (int)($_POST['team_id'] ?? 0);
-$tabNum = (int)($_POST['tab_num'] ?? 0);
+$teamId = (int)($data['team_id'] ?? 0);
+$tabNum = (int)($data['tab_num'] ?? 0);
 
-// to do: возможно переделаю в процедуру в БД
+if ($teamId <= 0 || $tabNum <= 0) {
+    http_response_code(400);
+    echo json_encode([
+        'ok' => false,
+        'message' => 'Некорректные данные',
+    ], JSON_UNESCAPED_UNICODE);
+    exit;
+}
 
-// удаляем сотрудника из команды
+$accrualRows = $pg_db->Query("
+    select 1
+    from canban.canban_score_accrual
+    where team_id = $teamId
+      and tab_num = $tabNum
+    limit 1
+", true);
+
+if ($accrualRows && count($accrualRows) > 0) {
+    $pg_db->Close();
+
+    echo json_encode([
+        'ok' => false,
+        'message' => 'Нельзя удалить участника из уже принятой команды',
+    ], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
 $deleteUserQuery = "
     delete from canban.canban_user_team
     where team_id = $teamId
@@ -33,7 +57,6 @@ $deleteUserQuery = "
 
 $pg_db->Query($deleteUserQuery);
 
-// проверяем, остались ли еще участники в команде
 $countQuery = "
     select count(*) as cnt
     from canban.canban_user_team
@@ -43,7 +66,6 @@ $countQuery = "
 $countResult = $pg_db->Query($countQuery, true);
 $participantsCount = (int)$countResult[0]['cnt'];
 
-// если команда пустая - возвращаем задачу в бэклог и удаляем всё связанное с командой
 if ($participantsCount === 0) {
     $taskQuery = "
         select task_id

@@ -61,6 +61,8 @@ export default function TaskCard({ task, onClick, onDragStart }: TaskCardProps) 
   const color = accentByStatus[task.board_status];
   // состояние дедлайна
   const deadlineState = getDeadlineState(task.deadline_full);
+  // не показывать дедлайн, если статус - готово
+  const shouldShowDeadline = task.board_status !== 'done';
 
   return (
     <Paper
@@ -106,36 +108,40 @@ export default function TaskCard({ task, onClick, onDragStart }: TaskCardProps) 
           <div />
         )}
 
-        <Group gap="xs" align="center">
-          <ThemeIcon variant="light" size="sm" radius="md" color="gray">
-            <IconCalendar size={14} />
-          </ThemeIcon>
-
-          <Text
-            size="sm"
-            c={deadlineState === 'overdue' ? 'red' : 'dimmed'}
-            fw={deadlineState === 'overdue' ? 700 : 400}
-          >
-            {task.deadline_short}
-          </Text>
-
-          {deadlineState === 'warning' && (
-            <ThemeIcon variant="light" size="sm" radius="xl" color="orange">
-              <IconFlame size={14} />
+        {shouldShowDeadline ? (
+          <Group gap="xs" align="center">
+            <ThemeIcon variant="light" size="sm" radius="md" color="gray">
+              <IconCalendar size={14} />
             </ThemeIcon>
-          )}
 
-          {deadlineState === 'overdue' && (
-            <Badge
-              color="red"
-              variant="light"
-              radius="sm"
-              leftSection={<IconAlertCircle size={12} />}
+            <Text
+              size="sm"
+              c={deadlineState === 'overdue' ? 'red' : 'dimmed'}
+              fw={deadlineState === 'overdue' ? 700 : 400}
             >
-              Просрочено
-            </Badge>
-          )}
-        </Group>
+              {task.deadline_short}
+            </Text>
+
+            {deadlineState === 'warning' && (
+              <ThemeIcon variant="light" size="sm" radius="xl" color="orange">
+                <IconFlame size={14} />
+              </ThemeIcon>
+            )}
+
+            {deadlineState === 'overdue' && (
+              <Badge
+                color="red"
+                variant="light"
+                radius="sm"
+                leftSection={<IconAlertCircle size={12} />}
+              >
+                Просрочено
+              </Badge>
+            )}
+          </Group>
+        ) : (
+          <div />
+        )}
       </Group>
     </Paper>
   );

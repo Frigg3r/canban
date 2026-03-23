@@ -27,7 +27,7 @@ type AppView = 'kanban' | 'rating';
 
 export default function App() {
   // пока захардкодил
-  const currentTabNum = 1002;
+  const currentTabNum = 1001;
 
   const [currentUser, setCurrentUser] = useState<KanbanCurrentUser | null>(null);
   const [loading, setLoading] = useState(true);
