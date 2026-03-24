@@ -112,7 +112,7 @@ export default function RatingPage({ onBackClick }: RatingPageProps) {
               <Select
                 data={quarterOptions}
                 value={quarter}
-                onChange={(value) => setQuarter(value || getCurrentQuarter())}
+                onChange={(value) => setQuarter(value!)}
                 w={160}
                 radius="md"
                 allowDeselect={false}

@@ -11,6 +11,7 @@ export default function KanbanActions({
   onCreateTaskClick,
   onCreateUserClick,
 }: KanbanActionsProps) {
+  
   if (!canCreateTask) {
     return null;
   }

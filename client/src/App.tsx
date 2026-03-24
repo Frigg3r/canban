@@ -1,100 +1,73 @@
-import { createContext, useContext, useEffect, useState } from 'react';
-import { Center, Loader, MantineProvider, Text } from '@mantine/core';
-import { Notifications } from '@mantine/notifications';
-import { DatesProvider } from '@mantine/dates';
+import { useEffect, useState, type ReactNode } from 'react';
+import { Center, Loader, Text } from '@mantine/core';
 import { kanbanApi } from './api/kanban';
 import type { KanbanCurrentUser } from './types/kanban';
+import { AppAuthContext } from './app-auth';
 import KanbanBoard from './components/KanbanBoard/KanbanBoard';
 import RatingPage from './pages/RatingPage/RatingPage';
 
-interface AppAuthContextValue {
-  currentUser: KanbanCurrentUser;
-}
-
-const AppAuthContext = createContext<AppAuthContextValue | null>(null);
-
-export function useAppAuth() {
-  const context = useContext(AppAuthContext);
-
-  if (!context) {
-    throw new Error('useAppAuth должен использоваться внутри App');
-  }
-
-  return context;
-}
-
 type AppView = 'kanban' | 'rating';
 
-export default function App() {
-  // пока захардкодил
-  const currentTabNum = 1001;
+function getCurrentTabNum() {
+  // временно: пока нет нормальной авторизации
+  return 1001;
+}
 
+export default function App() {
   const [currentUser, setCurrentUser] = useState<KanbanCurrentUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [view, setView] = useState<AppView>('kanban');
 
   useEffect(() => {
+    // при старте приложения загружаем текущего пользователя
     const loadCurrentUser = async () => {
-      try {
-        setLoading(true);
-        setError('');
+      setLoading(true);
+      setError('');
 
-        const user = await kanbanApi.getCurrentUser(currentTabNum);
+      try {
+        const user = await kanbanApi.getCurrentUser(getCurrentTabNum());
         setCurrentUser(user);
       } catch (err) {
         console.error('Ошибка загрузки текущего пользователя:', err);
-        setError(err instanceof Error ? err.message : 'Не удалось загрузить текущего пользователя');
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'Не удалось загрузить текущего пользователя'
+        );
       } finally {
         setLoading(false);
       }
     };
 
     loadCurrentUser();
-  }, [currentTabNum]);
+  }, []);
+
+  let content: ReactNode;
 
   if (loading) {
-    return (
-      <MantineProvider>
-        <DatesProvider settings={{ locale: 'ru', firstDayOfWeek: 1 }}>
-          <Notifications position="top-right" />
-          <Center h="100vh">
-            <Loader />
-          </Center>
-        </DatesProvider>
-      </MantineProvider>
+    content = (
+      <Center h="100vh">
+        <Loader />
+      </Center>
+    );
+  } else if (error || !currentUser) {
+    content = (
+      <Center h="100vh">
+        <Text c="red">{error || 'Пользователь не найден'}</Text>
+      </Center>
+    );
+  } else {
+    content = (
+      <AppAuthContext.Provider value={{ currentUser }}>
+        {view === 'kanban' ? (
+          <KanbanBoard onRatingClick={() => setView('rating')} />
+        ) : (
+          <RatingPage onBackClick={() => setView('kanban')} />
+        )}
+      </AppAuthContext.Provider>
     );
   }
 
-  if (error || !currentUser) {
-    return (
-      <MantineProvider>
-        <DatesProvider settings={{ locale: 'ru', firstDayOfWeek: 1 }}>
-          <Notifications position="top-right" />
-          <Center h="100vh">
-            <Text c="red">{error || 'Пользователь не найден'}</Text>
-          </Center>
-        </DatesProvider>
-      </MantineProvider>
-    );
-  }
-
-  return (
-    <MantineProvider>
-      <DatesProvider settings={{ locale: 'ru', firstDayOfWeek: 1 }}>
-        <Notifications position="top-right" />
-        <AppAuthContext.Provider
-          value={{
-            currentUser,
-          }}
-        >
-          {view === 'kanban' ? (
-            <KanbanBoard onRatingClick={() => setView('rating')} />
-          ) : (
-            <RatingPage onBackClick={() => setView('kanban')} />
-          )}
-        </AppAuthContext.Provider>
-      </DatesProvider>
-    </MantineProvider>
-  );
+  return content;
 }

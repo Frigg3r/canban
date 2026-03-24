@@ -1,5 +1,5 @@
 import { Button, Group, Stack, Text } from '@mantine/core';
-import { useAppAuth } from '../../App';
+import { useAppAuth } from '../../app-auth';
 import styles from './KanbanHeader.module.css';
 
 interface KanbanHeaderProps {

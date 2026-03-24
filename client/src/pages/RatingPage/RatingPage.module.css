@@ -51,3 +51,11 @@
   font-weight: 800;
   line-height: 1;
 }
+
+.tableAlignRight {
+  text-align: right;
+}
+
+.tableAlignCenter {
+  text-align: center;
+}

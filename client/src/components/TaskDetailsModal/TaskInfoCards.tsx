@@ -1,10 +1,12 @@
-import { Group, Paper, Text, ThemeIcon } from '@mantine/core';
+import { Group, Paper, Text, ThemeIcon, TextInput, NumberInput } from '@mantine/core';
 import {
   IconCalendar,
   IconTargetArrow,
   IconUserCheck,
   IconUsers,
 } from '@tabler/icons-react';
+
+import styles from './TaskDetailsModal.module.css';
 
 interface TaskInfoCardsProps {
   deadline: string;
@@ -13,12 +15,18 @@ interface TaskInfoCardsProps {
   currentStatusColor: string;
   approvedByName: string | null;
   approvedAt: string | null;
+
+  isEditingTask: boolean;
+  editDeadline: string;
+  editQuota: string;
+  onEditDeadlineChange: (value: string) => void;
+  onEditQuotaChange: (value: string) => void;
 }
 
 interface InfoCardProps {
   icon: React.ReactNode;
   label: string;
-  value: string | number;
+  value: React.ReactNode;
 }
 
 interface ApprovalPillProps {
@@ -50,9 +58,7 @@ function ApprovalPill({ icon, label, value }: ApprovalPillProps) {
       px="md"
       py="xs"
       bg="#f6fcf8"
-      style={{
-        borderColor: '#d7ebe0',
-      }}
+      className={styles.approvalPill}
     >
       <Group gap="xs" wrap="nowrap">
         <ThemeIcon variant="light" color="teal" radius="xl" size="sm">
@@ -78,6 +84,11 @@ export default function TaskInfoCards({
   currentStatusColor,
   approvedByName,
   approvedAt,
+  isEditingTask,
+  editDeadline,
+  editQuota,
+  onEditDeadlineChange,
+  onEditQuotaChange,
 }: TaskInfoCardsProps) {
   const hasApprovalInfo = Boolean(approvedByName || approvedAt);
 
@@ -91,7 +102,19 @@ export default function TaskInfoCards({
             </ThemeIcon>
           }
           label="Дедлайн"
-          value={deadline}
+          value={
+            isEditingTask ? (
+              <TextInput
+                value={editDeadline}
+                onChange={(e) => onEditDeadlineChange(e.currentTarget.value)}
+                radius="md"
+                size="sm"
+                placeholder="YYYY-MM-DD"
+              />
+            ) : (
+              deadline
+            )
+          }
         />
 
         <InfoCard
@@ -101,7 +124,19 @@ export default function TaskInfoCards({
             </ThemeIcon>
           }
           label="Квота"
-          value={quota}
+          value={
+            isEditingTask ? (
+              <NumberInput
+                value={editQuota}
+                onChange={(value) => onEditQuotaChange(String(value ?? ''))}
+                min={1}
+                radius="md"
+                size="sm"
+              />
+            ) : (
+              quota
+            )
+          }
         />
 
         <InfoCard

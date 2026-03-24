@@ -1,4 +1,4 @@
-import type { KanbanComment, KanbanTeamDetails } from '../../types/kanban';
+import type { KanbanComment, KanbanStatus, KanbanTeamDetails } from '../../types/kanban';
 
 interface CurrentUserLike {
   tab_num: number | string;
@@ -52,13 +52,20 @@ export function getCanRemoveParticipant(currentUser: CurrentUserLike, tabNum: nu
   );
 }
 
+export function getCanEditTask(
+  currentUser: CurrentUserLike,
+  boardStatus: KanbanStatus,
+  isBacklogView: boolean
+) {
+  return getIsManager(currentUser) && boardStatus === 'backlog' && isBacklogView;
+}
+
 export function getCanSubmitComment(
-  currentTeam: KanbanTeamDetails | null,
   canCommentCurrentTeam: boolean,
   trimmedComment: string,
   commentLoading: boolean
 ) {
-  return Boolean(currentTeam && canCommentCurrentTeam && trimmedComment && !commentLoading);
+  return canCommentCurrentTeam && trimmedComment.length > 0 && !commentLoading;
 }
 
 export function getCanDeleteComment(

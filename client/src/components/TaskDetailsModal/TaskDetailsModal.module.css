@@ -20,3 +20,24 @@
   white-space: pre-wrap;
   line-height: 1.5;
 }
+
+.heroContent {
+  flex: 1;
+}
+
+.scoreInput {
+  min-width: 120px;
+}
+
+.approvalPill {
+  border-color: #d7ebe0;
+}
+
+.commentTextarea :global(textarea) {
+  background: #faf8ff;
+  border-color: #e9defc;
+}
+
+.teamSelect {
+  min-width: 220px;
+}

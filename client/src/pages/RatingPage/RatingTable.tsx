@@ -23,7 +23,7 @@ export default function RatingTable({ rating }: RatingTableProps) {
           <Table.Th>Место</Table.Th>
           <Table.Th>ФИО</Table.Th>
           <Table.Th>Табельный</Table.Th>
-          <Table.Th style={{ textAlign: 'right' }}>Баллы</Table.Th>
+          <Table.Th className={styles.tableAlignRight}>Баллы</Table.Th>
         </Table.Tr>
       </Table.Thead>
 
@@ -60,7 +60,7 @@ export default function RatingTable({ rating }: RatingTableProps) {
 
               <Table.Td>{user.tab_num}</Table.Td>
 
-              <Table.Td style={{ textAlign: 'right' }}>
+              <Table.Td className={styles.tableAlignRight}>
                 <Text fw={800} c={isTopThree ? theme.scoreColor : undefined}>
                   {user.total_score}
                 </Text>

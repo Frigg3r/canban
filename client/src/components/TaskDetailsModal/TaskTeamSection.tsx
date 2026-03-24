@@ -1,5 +1,6 @@
 import { Badge, Button, Group, Paper, Select, Stack, Text } from '@mantine/core';
 import type { KanbanAvailableUser, KanbanTeamDetails } from '../../types/kanban';
+import styles from './TaskDetailsModal.module.css';
 
 interface TaskTeamSectionProps {
   team: KanbanTeamDetails;
@@ -71,7 +72,7 @@ export default function TaskTeamSection({
                 searchable
                 nothingFoundMessage="Нет доступных сотрудников"
                 disabled={availableUsers.length === 0}
-                style={{ minWidth: 220 }}
+                className={styles.teamSelect}
               />
 
               <Button

@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { Box, Center, Grid, Loader, Text } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { kanbanApi } from '../../api/kanban';
-import type { CreateTaskPayload, KanbanStatus, KanbanTask } from '../../types/kanban';
+import type { KanbanStatus, KanbanTask } from '../../types/kanban';
+import type { CreateTaskPayload } from '../../types/kanban-api';
 
 import KanbanHeader from '../KanbanHeader/KanbanHeader';
 import KanbanActions from '../KanbanActions/KanbanActions';
@@ -14,7 +15,7 @@ import TaskDetailsModal from '../TaskDetailsModal/TaskDetailsModal';
 
 import CreateUserModal from '../CreateUserModal/CreateUserModal';
 
-import { useAppAuth } from '../../App';
+import { useAppAuth } from '../../app-auth';
 
 const boardColumns: KanbanStatus[] = ['backlog', 'inProgress', 'review', 'done'];
 
@@ -35,14 +36,20 @@ const showError = (message: string) => {
   });
 };
 
-// группируем карточки по статусам
+// группируем карточки по статусам в один проход
 const groupTasksByStatus = (tasks: KanbanTask[]) => {
-  return {
-    backlog: tasks.filter((task) => task.board_status === 'backlog'),
-    inProgress: tasks.filter((task) => task.board_status === 'inProgress'),
-    review: tasks.filter((task) => task.board_status === 'review'),
-    done: tasks.filter((task) => task.board_status === 'done'),
+  const grouped: Record<KanbanStatus, KanbanTask[]> = {
+    backlog: [],
+    inProgress: [],
+    review: [],
+    done: [],
   };
+
+  tasks.forEach((task) => {
+    grouped[task.board_status].push(task);
+  });
+
+  return grouped;
 };
 
 export default function KanbanBoard({
@@ -101,11 +108,7 @@ export default function KanbanBoard({
     showSuccess(successMessage);
   };
 
-  const handleTaskTeamChanged = async () => {
-    await loadTasks();
-  };
-
-  const handleTaskStatusChanged = async () => {
+  const reloadBoard = async () => {
     await loadTasks();
   };
 
@@ -144,10 +147,6 @@ export default function KanbanBoard({
       setDraggedTask(null);
       return;
     }
-
-    const isManager =
-      currentUser.role_name === 'Руководитель' ||
-      currentUser.role_name === 'Администратор';
 
     try {
       setIsDroppingTask(true);
@@ -301,9 +300,8 @@ export default function KanbanBoard({
         taskId={selectedTask?.taskId ?? null}
         teamId={selectedTask?.teamId ?? null}
         onClose={() => setSelectedTask(null)}
-        onTaskTeamChanged={handleTaskTeamChanged}
+        onTaskChanged={reloadBoard}
         onTaskArchived={handleTaskArchived}
-        onTaskStatusChanged={handleTaskStatusChanged}
       />
     </Box>
   );

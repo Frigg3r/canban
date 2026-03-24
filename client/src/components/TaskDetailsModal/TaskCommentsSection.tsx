@@ -105,12 +105,7 @@ export default function TaskCommentsSection({
             maxRows={6}
             autosize
             radius="lg"
-            styles={{
-              input: {
-                background: '#faf8ff',
-                borderColor: '#e9defc',
-              },
-            }}
+            className={styles.commentTextarea}
             onKeyDown={(event) => {
               if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
                 event.preventDefault();

@@ -25,41 +25,33 @@ export default function CreateUserModal({
   const [selectedUserTabNum, setSelectedUserTabNum] = useState<string | null>(null);
   const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null);
 
-  const loadUsers = async () => {
-    try {
-      setLoading(true);
-      const data = await kanbanApi.getDirectoryUsers();
-      setUsers(data);
-    } catch (err) {
-      console.error('Ошибка загрузки сотрудников:', err);
-
-      notifications.show({
-        title: 'Ошибка',
-        message: err instanceof Error ? err.message : 'Не удалось загрузить сотрудников',
-        color: 'red',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
     if (!opened) {
+      setSelectedUserTabNum(null);
+      setSelectedRoleId(null);
       return;
     }
 
+    const loadUsers = async () => {
+      try {
+        setLoading(true);
+        const data = await kanbanApi.getDirectoryUsers();
+        setUsers(data);
+      } catch (err) {
+        console.error('Ошибка загрузки сотрудников:', err);
+
+        notifications.show({
+          title: 'Ошибка',
+          message: err instanceof Error ? err.message : 'Не удалось загрузить сотрудников',
+          color: 'red',
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
     loadUsers();
   }, [opened]);
-
-  const resetForm = () => {
-    setSelectedUserTabNum(null);
-    setSelectedRoleId(null);
-  };
-
-  const handleClose = () => {
-    resetForm();
-    onClose();
-  };
 
   const selectedUser =
     users.find((user) => String(user.tab_num) === selectedUserTabNum) ?? null;
@@ -86,8 +78,7 @@ export default function CreateUserModal({
         autoClose: 1400,
       });
 
-      await loadUsers();
-      handleClose();
+      onClose();
     } catch (err) {
       console.error('Ошибка добавления сотрудника:', err);
 
@@ -104,7 +95,7 @@ export default function CreateUserModal({
   return (
     <Modal
       opened={opened}
-      onClose={handleClose}
+      onClose={onClose}
       title="Добавить сотрудника"
       centered
       size="md"
@@ -153,7 +144,7 @@ export default function CreateUserModal({
         )}
 
         <Group justify="flex-end">
-          <Button variant="default" onClick={handleClose} disabled={submitting}>
+          <Button variant="default" onClick={onClose} disabled={submitting}>
             Отмена
           </Button>
 

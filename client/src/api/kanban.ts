@@ -1,22 +1,28 @@
 import { BaseApi } from './ApiClass';
+
 import type {
-  AddCommentPayload,
-  AddUserPayload,
-  AddUserToTeamPayload,
-  ChangeTeamStatusPayload,
-  CreateTaskPayload,
   KanbanAvailableUser,
   KanbanComment,
   KanbanCurrentUser,
   KanbanTask,
   KanbanTaskDetails,
-  RemoveUserFromTeamPayload,
-  ReturnTaskToBacklogPayload,
-  TakeTaskPayload,
   KanbanRatingUser,
 } from '../types/kanban';
 
-// добавил тип ответа сервера
+import type {
+  AddCommentPayload,
+  AddUserPayload,
+  AddUserToTeamPayload,
+  ApproveTeamResultPayload,
+  ChangeTeamStatusPayload,
+  CreateTaskPayload,
+  RemoveUserFromTeamPayload,
+  ReturnTaskToBacklogPayload,
+  TakeTaskPayload,
+  UpdateTaskPayload,
+} from '../types/kanban-api';
+
+// для ответа сервера
 interface ApiResponse<T> {
   ok: boolean;
   data: T;
@@ -28,7 +34,7 @@ class KanbanApi extends BaseApi {
     super('http://localhost:8000');
   }
 
-  // базовый метод для всех запросов:
+  // описание базового запроса сервера
   private async requestData<T>(path: string, options?: RequestInit): Promise<T> {
     const result = await this.request<ApiResponse<T>>(path, options);
 
@@ -39,12 +45,10 @@ class KanbanApi extends BaseApi {
     return result.data;
   }
 
-  // получить все карточки для доски
   getTasks() {
     return this.requestData<KanbanTask[]>('/get-board.php');
   }
 
-  // создать новую карточку
   createTask(payload: CreateTaskPayload) {
     return this.requestData<KanbanTask>('/create-task.php', {
       method: 'POST',
@@ -52,7 +56,6 @@ class KanbanApi extends BaseApi {
     });
   }
 
-  // получить детали карточки
   getTaskDetails(taskId: number, teamId?: number | null) {
     const query = new URLSearchParams({
       task_id: String(taskId),
@@ -67,7 +70,6 @@ class KanbanApi extends BaseApi {
     );
   }
 
-  // добавить комментарий к карточке
   addComment(payload: AddCommentPayload) {
     return this.requestData<KanbanComment>('/add-comment.php', {
       method: 'POST',
@@ -75,91 +77,89 @@ class KanbanApi extends BaseApi {
     });
   }
 
-  // удалить комментарий
   deleteComment(commentId: number) {
-    return this.requestData<unknown>(`/delete-comment.php?comment_id=${commentId}`, {
+    const query = new URLSearchParams({
+      comment_id: String(commentId),
+    });
+
+    return this.requestData<null>(`/delete-comment.php?${query.toString()}`, {
       method: 'DELETE',
     });
   }
 
-  // взять карточку в работу / создать команду по карточке
   takeTask(payload: TakeTaskPayload) {
-    return this.requestData<unknown>('/take-task.php', {
+    return this.requestData<null>('/take-task.php', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
   }
 
-  // добавить пользователя в команду
   addUserToTeam(payload: AddUserToTeamPayload) {
-    return this.requestData<unknown>('/add-user-to-team.php', {
+    return this.requestData<null>('/add-user-to-team.php', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
   }
 
-  // получить кандидатов для добавления в команду
-  getAvailableUsers(taskId: number) {
+  getTeamCandidates(taskId: number) {
+    const query = new URLSearchParams({
+      task_id: String(taskId),
+    });
+
     return this.requestData<KanbanAvailableUser[]>(
-      `/get-team-candidates.php?task_id=${taskId}`
+      `/get-team-candidates.php?${query.toString()}`
     );
   }
 
-  // получить сотрудников из справочника, которых еще нет в системе
   getDirectoryUsers() {
-    return this.requestData<KanbanAvailableUser[]>(
-      '/get-directory-users.php'
-    );
+    return this.requestData<KanbanAvailableUser[]>('/get-directory-users.php');
   }
 
-  // убрать пользователя из команды
   removeUserFromTeam(payload: RemoveUserFromTeamPayload) {
-    return this.requestData<unknown>('/remove-user-from-team.php', {
+    return this.requestData<null>('/remove-user-from-team.php', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
   }
 
-  // архивировать карточку
   archiveTask(taskId: number) {
-    return this.requestData<unknown>('/archive-task.php', {
+    return this.requestData<null>('/archive-task.php', {
       method: 'POST',
       body: JSON.stringify({ task_id: taskId }),
     });
   }
 
-  // вернуть карточку в бэклог
   returnTaskToBacklog(payload: ReturnTaskToBacklogPayload) {
-    return this.requestData<unknown>('/return-task-to-backlog.php', {
+    return this.requestData<null>('/return-task-to-backlog.php', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
   }
 
-  // сменить статус команды
   changeTeamStatus(payload: ChangeTeamStatusPayload) {
-    return this.requestData<unknown>('/change-team-status.php', {
+    return this.requestData<null>('/change-team-status.php', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
   }
 
-  // получить текущего пользователя по табельному номеру
   getCurrentUser(tabNum: number) {
+    const query = new URLSearchParams({
+      tab_num: String(tabNum),
+    });
+
     return this.requestData<KanbanCurrentUser>(
-      `/get-current-user.php?tab_num=${tabNum}`
+      `/get-current-user.php?${query.toString()}`
     );
   }
 
-  // добавить пользователя в систему
   addUser(payload: AddUserPayload) {
-    return this.requestData<unknown>('/add-user-to-canban.php', {
+    return this.requestData<null>('/add-user-to-canban.php', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
   }
 
-  // рейтинг
   getRating(year: number, quarter: number) {
     const query = new URLSearchParams({
       year: String(year),
@@ -171,18 +171,21 @@ class KanbanApi extends BaseApi {
     );
   }
 
-  // принять результат команды
-  approveTeamResult(teamId: number, approvedByTabNum: number) {
+  approveTeamResult(payload: ApproveTeamResultPayload) {
     return this.requestData<{ task_id: number; team_id: number }>(
       '/approve-team-result.php',
       {
         method: 'POST',
-        body: JSON.stringify({
-          team_id: teamId,
-          approved_by_tab_num: approvedByTabNum,
-        }),
+        body: JSON.stringify(payload),
       }
     );
+  }
+
+  updateTask(payload: UpdateTaskPayload) {
+    return this.requestData<KanbanTaskDetails>('/update-task.php', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
   }
 }
 

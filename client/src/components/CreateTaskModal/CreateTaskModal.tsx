@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button, Group, Modal, NumberInput, Stack, TextInput, Textarea } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
-import type { CreateTaskPayload } from '../../types/kanban';
+import type { CreateTaskPayload } from '../../types/kanban-api';
 
 interface CreateTaskModalProps {
   opened: boolean;
@@ -22,50 +22,52 @@ export default function CreateTaskModal({
   const [quota, setQuota] = useState<number | string>(1);
   const [deadline, setDeadline] = useState<string | null>(null);
 
-  const resetForm = () => {
-    setName('');
-    setDescription('');
-    setScore(10);
-    setQuota(1);
-    setDeadline(null);
-  };
-
-  const handleClose = () => {
-    resetForm();
-    onClose();
-  };
-
+  // сброс формы
   useEffect(() => {
     if (!opened) {
-      resetForm();
+      setName('');
+      setDescription('');
+      setScore(10);
+      setQuota(1);
+      setDeadline(null);
     }
   }, [opened]);
 
-  const handleSubmit = () => {
-    const trimmedName = name.trim();
-    const trimmedDescription = description.trim();
-    const numericScore = Number(score);
-    const numericQuota = Number(quota);
+  const trimmedName = name.trim();
+  const trimmedDescription = description.trim();
+  const numericScore = Number(score);
+  const numericQuota = Number(quota);
 
-    if (!trimmedName || !trimmedDescription || numericScore <= 0 || numericQuota <= 0 || !deadline) {
+  // валидация формы
+  const canSubmit = useMemo(() => {
+    return Boolean(
+      trimmedName &&
+        trimmedDescription &&
+        deadline &&
+        numericScore > 0 &&
+        numericQuota > 0
+    );
+  }, [trimmedName, trimmedDescription, deadline, numericScore, numericQuota]);
+
+  const handleSubmit = () => {
+    if (!canSubmit || !deadline) {
       return;
     }
 
-    const payload: CreateTaskPayload = {
+    // onSubmit принимаем от родителя (KanbanBoard)
+    onSubmit({
       name: trimmedName,
       description: trimmedDescription,
       score: numericScore,
       quota: numericQuota,
       deadline,
-    };
-
-    onSubmit(payload);
+    });
   };
 
   return (
     <Modal
       opened={opened}
-      onClose={handleClose}
+      onClose={onClose}
       title="Создание карточки"
       centered
       radius="xl"
@@ -145,11 +147,16 @@ export default function CreateTaskModal({
         />
 
         <Group justify="flex-end" mt="sm">
-          <Button variant="default" onClick={handleClose}>
+          <Button variant="default" onClick={onClose}>
             Отмена
           </Button>
 
-          <Button onClick={handleSubmit} loading={loading} color="violet">
+          <Button
+            onClick={handleSubmit}
+            loading={loading}
+            color="violet"
+            disabled={!canSubmit}
+          >
             Создать
           </Button>
         </Group>
