@@ -32,6 +32,7 @@ import {
   getCanRemoveParticipant,
   getCanSubmitComment,
   getCanReviewTeam,
+  getCanEditQuota,
 } from './taskDetails.permissions';
 import { useAppAuth } from '../../app-auth';
 
@@ -125,19 +126,23 @@ export default function TaskDetailsModal({
   const isBacklogView = teamId == null;
 
   const currentTeam =
-    !taskDetails || isBacklogView ? null
+    !taskDetails || isBacklogView
+      ? null
       : taskDetails.teams.find((team) => Number(team.id) === Number(teamId)) ?? null;
 
-  const currentStatusKey = currentTeam?.status ?? taskDetails?.board_status ?? 'backlog';
+  const openedColumnStatus =
+    isBacklogView
+      ? 'backlog'
+      : currentTeam?.status ?? taskDetails?.board_status ?? 'backlog';
+
+  const currentStatusKey = openedColumnStatus;
   const currentStatusColor = statusColor[currentStatusKey] || 'gray';
   const trimmedComment = commentText.trim();
 
   const canArchiveTask = getCanArchiveTask(currentUser, currentStatusKey);
-  const canEditTask = getCanEditTask(
-    currentUser,
-    taskDetails?.board_status ?? 'backlog',
-    isBacklogView
-  );
+  const canEditTask = getCanEditTask(currentUser);
+  const canEditQuota = getCanEditQuota(taskDetails?.board_status ?? 'backlog');
+
   const canCommentCurrentTeam = getCanCommentCurrentTeam(currentTeam, currentUser);
   const canEditTeam = getCanEditTeam(isBacklogView, currentTeam, canCommentCurrentTeam);
   const canReviewTeam = getCanReviewTeam(currentUser, currentTeam);
@@ -527,6 +532,7 @@ export default function TaskDetailsModal({
             taskDetails={taskDetails}
             currentStatusColor={currentStatusColor}
             canEditTask={canEditTask}
+            canEditQuota={canEditQuota}
             canArchiveTask={canArchiveTask}
             archiving={archiving}
             onArchive={handleArchiveTask}

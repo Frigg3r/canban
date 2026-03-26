@@ -6,7 +6,7 @@ import type { CreateTaskPayload } from '../../types/kanban-api';
 interface CreateTaskModalProps {
   opened: boolean;
   onClose: () => void;
-  onSubmit: (values: CreateTaskPayload) => void;
+  onSubmit: (values: Omit<CreateTaskPayload, 'created_by_tab_num'>) => void;
   loading?: boolean;
 }
 

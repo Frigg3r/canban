@@ -11,6 +11,7 @@ interface TaskEditableSectionProps {
   currentStatusColor: string;
 
   canEditTask: boolean;
+  canEditQuota: boolean;
 
   canArchiveTask: boolean;
   archiving: boolean;
@@ -29,6 +30,7 @@ export default function TaskEditableSection({
   taskDetails,
   currentStatusColor,
   canEditTask,
+  canEditQuota,
   canArchiveTask,
   archiving,
   onArchive,
@@ -101,7 +103,7 @@ export default function TaskEditableSection({
         name: trimmedName,
         description: trimmedDescription,
         score: Number(editScore),
-        quota: Number(editQuota),
+        quota: canEditQuota ? Number(editQuota) : Number(taskDetails.quota),
         deadline: trimmedDeadline,
       });
 
@@ -168,6 +170,7 @@ export default function TaskEditableSection({
         editQuota={editQuota}
         onEditDeadlineChange={setEditDeadline}
         onEditQuotaChange={setEditQuota}
+        canEditQuota={canEditQuota}
       />
     </>
   );

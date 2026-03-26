@@ -18,7 +18,7 @@ import type {
   CreateTaskPayload,
   RemoveUserFromTeamPayload,
   ReturnTaskToBacklogPayload,
-  TakeTaskPayload,
+  TakeTaskResult,
   UpdateTaskPayload,
 } from '../types/kanban-api';
 
@@ -87,7 +87,7 @@ class KanbanApi extends BaseApi {
     });
   }
 
-  takeTask(payload: TakeTaskPayload) {
+  takeTask(payload: TakeTaskResult) {
     return this.requestData<null>('/take-task.php', {
       method: 'POST',
       body: JSON.stringify(payload),

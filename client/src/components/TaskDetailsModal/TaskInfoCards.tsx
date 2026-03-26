@@ -21,6 +21,7 @@ interface TaskInfoCardsProps {
   editQuota: string;
   onEditDeadlineChange: (value: string) => void;
   onEditQuotaChange: (value: string) => void;
+  canEditQuota: boolean;
 }
 
 interface InfoCardProps {
@@ -89,6 +90,7 @@ export default function TaskInfoCards({
   editQuota,
   onEditDeadlineChange,
   onEditQuotaChange,
+  canEditQuota,
 }: TaskInfoCardsProps) {
   const hasApprovalInfo = Boolean(approvedByName || approvedAt);
 
@@ -125,7 +127,7 @@ export default function TaskInfoCards({
           }
           label="Квота"
           value={
-            isEditingTask ? (
+            isEditingTask && canEditQuota ? (
               <NumberInput
                 value={editQuota}
                 onChange={(value) => onEditQuotaChange(String(value ?? ''))}

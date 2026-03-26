@@ -118,9 +118,14 @@ export default function KanbanBoard({
   };
 
   // при создании задачи
-  const handleCreateTaskSubmit = async (values: CreateTaskPayload) => {
+  const handleCreateTaskSubmit = async (
+    values: Omit<CreateTaskPayload, 'created_by_tab_num'>
+  ) => {
     try {
-      const createdTask = await kanbanApi.createTask(values);
+      const createdTask = await kanbanApi.createTask({
+        ...values,
+        created_by_tab_num: currentUser.tab_num,
+      });
 
       setTasks((prev) => [createdTask, ...prev]);
       setCreateTaskOpened(false);
@@ -156,7 +161,7 @@ export default function KanbanBoard({
           () =>
             kanbanApi.takeTask({
               task_id: draggedTask.id,
-              participants: [currentUser.tab_num],
+              tab_num: currentUser.tab_num,
             }),
           'Задача взята в работу'
         );

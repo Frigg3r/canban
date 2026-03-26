@@ -52,12 +52,12 @@ export function getCanRemoveParticipant(currentUser: CurrentUserLike, tabNum: nu
   );
 }
 
-export function getCanEditTask(
-  currentUser: CurrentUserLike,
-  boardStatus: KanbanStatus,
-  isBacklogView: boolean
-) {
-  return getIsManager(currentUser) && boardStatus === 'backlog' && isBacklogView;
+export function getCanEditTask(currentUser: CurrentUserLike) {
+  return getIsManager(currentUser);
+}
+
+export function getCanEditQuota(boardStatus: KanbanStatus) {
+  return boardStatus === 'backlog';
 }
 
 export function getCanSubmitComment(

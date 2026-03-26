@@ -6,6 +6,7 @@ export interface CreateTaskPayload {
   score: number;
   quota: number;
   deadline: string;
+  created_by_tab_num: number;
 }
 
 export interface UpdateTaskPayload {
@@ -23,9 +24,9 @@ export interface AddCommentPayload {
   author_tab_num: number;
 }
 
-export interface TakeTaskPayload {
+export interface TakeTaskResult {
   task_id: number;
-  participants: number[];
+  tab_num: number;
 }
 
 export interface AddUserToTeamPayload {
