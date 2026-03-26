@@ -19,10 +19,10 @@ require_once(__DIR__ . '/utils/pg.connect.php');
 
 $input = json_decode(file_get_contents('php://input'), true);
 
-$tabNum = isset($input['tab_num']) ? (int) $input['tab_num'] : 0;
-$fullName = isset($input['fio']) ? trim($input['fio']) : '';
-$email = isset($input['email']) ? trim($input['email']) : '';
-$roleId = isset($input['role_id']) ? (int) $input['role_id'] : 0;
+$tabNum = (int)($input['tab_num'] ?? 0);
+$fullName = trim($input['fio'] ?? '');
+$email = trim($input['email'] ?? '');
+$roleId = (int)($input['role_id'] ?? 0);
 
 if ($tabNum <= 0 || $fullName === '' || $email === '' || $roleId <= 0) {
     http_response_code(400);
@@ -56,7 +56,6 @@ $pg_db->Query("
 $pg_db->Close();
 
 echo json_encode([
-    'ok' => true,
-    'data' => null,
+    'ok' => true
 ], JSON_UNESCAPED_UNICODE);
 ?>

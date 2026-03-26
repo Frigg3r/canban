@@ -18,15 +18,14 @@ if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
 require_once(__DIR__ . '/utils/pg.connect.php');
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    $_POST = json_decode(file_get_contents("php://input"), true);
+    $input = json_decode(file_get_contents("php://input"), true);
 
-    $name = $_POST['name'];
-    $description = $_POST['description'];
-    $score = (int) $_POST['score'];
-    $quota = (int) $_POST['quota'];
-    $deadline = $_POST['deadline'];
-
-    $created_by_tab_num = 2101895;
+    $name = $input['name'];
+    $description = $input['description'];
+    $score = (int) $input['score'];
+    $quota = (int) $input['quota'];
+    $deadline = $input['deadline'];
+    $created_by_tab_num = (int)($input['created_by_tab_num'] ?? 0);
 
     $query = "
         insert into canban.canban_task (

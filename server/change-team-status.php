@@ -16,10 +16,10 @@ if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
 
 require_once(__DIR__ . '/utils/pg.connect.php');
 
-$_POST = json_decode(file_get_contents("php://input"), true);
+$input = json_decode(file_get_contents("php://input"), true) ?? [];
 
-$teamId = (int)($_POST['team_id'] ?? 0);
-$status = trim($_POST['status'] ?? '');
+$teamId = (int)($input['team_id'] ?? 0);
+$status = trim($input['status'] ?? '');
 
 if ($teamId <= 0 || !$status) {
     http_response_code(400);
@@ -30,11 +30,9 @@ if ($teamId <= 0 || !$status) {
     exit;
 }
 
-// переводим текстовый статус в status_id
 $statusMap = [
     'inProgress' => 1,
     'review' => 2,
-    'done' => 3,
 ];
 
 if (!isset($statusMap[$status])) {

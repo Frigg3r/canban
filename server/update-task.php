@@ -16,14 +16,14 @@ if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
 
 require_once(__DIR__ . '/utils/pg.connect.php');
 
-$_POST = json_decode(file_get_contents("php://input"), true);
+$input = json_decode(file_get_contents("php://input"), true);
 
-$taskId = (int)($_POST['task_id'] ?? 0);
-$name = trim($_POST['name'] ?? '');
-$description = trim($_POST['description'] ?? '');
-$score = (int)($_POST['score'] ?? 0);
-$quota = (int)($_POST['quota'] ?? 0);
-$deadline = trim($_POST['deadline'] ?? '');
+$taskId = (int)($input['task_id'] ?? 0);
+$name = trim($input['name'] ?? '');
+$description = trim($input['description'] ?? '');
+$score = (int)($input['score'] ?? 0);
+$quota = (int)($input['quota'] ?? 0);
+$deadline = trim($input['deadline'] ?? '');
 
 if ($taskId <= 0 || !$name || !$description || $score <= 0 || $quota <= 0 || !$deadline) {
     http_response_code(400);

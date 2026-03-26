@@ -17,9 +17,9 @@ if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
 
 require_once(__DIR__ . '/utils/pg.connect.php');
 
-$_POST = json_decode(file_get_contents("php://input"), true);
+$input = json_decode(file_get_contents("php://input"), true);
 
-$taskId = (int)($_POST['task_id'] ?? 0);
+$taskId = (int)($input['task_id'] ?? 0);
 
 if ($taskId <= 0) {
     echo json_encode([
@@ -31,9 +31,7 @@ if ($taskId <= 0) {
 
 $taskQuery = "
     select
-        id,
-        status_id,
-        is_archived
+        status_id
     from canban.canban_task
     where id = $taskId
     limit 1
@@ -53,17 +51,6 @@ if (!$taskResult || !isset($taskResult[0])) {
 
 $task = $taskResult[0];
 $statusId = (int)$task['status_id'];
-$isArchived = filter_var($task['is_archived'], FILTER_VALIDATE_BOOLEAN);
-
-if ($isArchived) {
-    $pg_db->Close();
-
-    echo json_encode([
-        'ok' => true,
-        'message' => 'Задача уже в архиве',
-    ], JSON_UNESCAPED_UNICODE);
-    exit;
-}
 
 if (!in_array($statusId, [1, 3], true)) {
     $pg_db->Close();

@@ -1,6 +1,5 @@
 <?php
 header("Content-Type: application/json; charset=utf-8");
-header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 
@@ -17,42 +16,40 @@ if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
 
 require_once(__DIR__ . '/utils/pg.connect.php');
 
-$_POST = json_decode(file_get_contents("php://input"), true);
+$input = json_decode(file_get_contents("php://input"), true) ?? [];
 
-$taskId = (int)($_POST['task_id'] ?? 0);
-$participants = $_POST['participants'] ?? [];
+$taskId = (int)($input['task_id'] ?? 0);
+$tabNum = (int)($input['tab_num'] ?? 0);
 
-if ($taskId <= 0) {
+if ($taskId <= 0 || $tabNum <= 0) {
+    http_response_code(400);
     echo json_encode([
         'ok' => false,
-        'message' => 'Не передан task_id',
+        'message' => 'Некорректные данные',
     ], JSON_UNESCAPED_UNICODE);
     exit;
 }
 
-// если хотя бы один из переданных сотрудников уже участвует
-// в этой задаче, повторно брать ее нельзя
-if (!empty($participants)) {
-    $participantsList = implode(',', $participants);
+$busyParticipantQuery = "
+    select 1
+    from canban.canban_user_team cut
+    join canban.canban_team ct on ct.id = cut.team_id
+    where ct.task_id = $taskId
+      and cut.tab_num = $tabNum
+    limit 1
+";
 
-    $busyParticipantQuery = "
-        select cut.tab_num
-        from canban.canban_user_team cut
-        join canban.canban_team ct on ct.id = cut.team_id
-        where ct.task_id = $taskId
-          and cut.tab_num in ($participantsList)
-        limit 1
-    ";
+$busyParticipant = $pg_db->Query($busyParticipantQuery, true);
 
-    $busyParticipant = $pg_db->Query($busyParticipantQuery, true);
+if (!empty($busyParticipant)) {
+    $pg_db->Close();
 
-    if (!empty($busyParticipant)) {
-        echo json_encode([
-            'ok' => false,
-            'message' => 'Сотрудник уже участвует в этой задаче',
-        ], JSON_UNESCAPED_UNICODE);
-        exit;
-    }
+    http_response_code(400);
+    echo json_encode([
+        'ok' => false,
+        'message' => 'Сотрудник уже участвует в этой задаче',
+    ], JSON_UNESCAPED_UNICODE);
+    exit;
 }
 
 $teamQuery = "
@@ -70,25 +67,29 @@ $teamQuery = "
 $teamResult = $pg_db->Query($teamQuery, true);
 $teamId = (int)$teamResult[0]['id'];
 
-// оставил forEach, можно сделать одним запросом, развернув с помощью unnest, пока думаю..
-foreach ($participants as $tabNum) {
-    $insertParticipantQuery = "
-        insert into canban.canban_user_team (
-            team_id,
-            tab_num
-        )
-        values (
-            $teamId,
-            $tabNum
-        )
-    ";
+$insertParticipantQuery = "
+    insert into canban.canban_user_team (
+        team_id,
+        tab_num
+    )
+    values (
+        $teamId,
+        $tabNum
+    )
+";
 
-    $pg_db->Query($insertParticipantQuery);
-}
+$pg_db->Query($insertParticipantQuery);
+
+$updateTaskQuery = "
+    update canban.canban_task
+    set status_id = 2
+    where id = $taskId
+";
+
+$pg_db->Query($updateTaskQuery);
 
 $pg_db->Close();
 
-// возвращаем карточку с привязкой к команде
 echo json_encode([
     'ok' => true,
     'data' => [
