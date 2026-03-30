@@ -1,7 +1,7 @@
 import { Badge, Group, Paper, Text, ThemeIcon } from '@mantine/core';
 import { IconAlertCircle, IconCalendar, IconFlame, IconUsers } from '@tabler/icons-react';
 import type { KanbanStatus, KanbanTask } from '../../types/kanban';
-import type { DragEvent } from 'react';
+import { memo, type DragEvent } from 'react';
 
 interface TaskCardProps {
   task: KanbanTask;
@@ -57,7 +57,7 @@ function getDeadlineState(deadlineFull: string): DeadlineState {
   return 'normal';
 }
 
-export default function TaskCard({ task, onClick, onDragStart }: TaskCardProps) {
+function TaskCard({ task, onClick, onDragStart }: TaskCardProps) {
   const color = accentByStatus[task.board_status];
   // состояние дедлайна
   const deadlineState = getDeadlineState(task.deadline_full);
@@ -146,3 +146,5 @@ export default function TaskCard({ task, onClick, onDragStart }: TaskCardProps) 
     </Paper>
   );
 }
+
+export default memo(TaskCard);
