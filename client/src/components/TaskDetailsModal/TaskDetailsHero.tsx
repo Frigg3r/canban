@@ -17,6 +17,7 @@ interface TaskDetailsHeroProps {
   title: string;
   description: string | null;
   score: number;
+  createdByName: string | null;
   currentStatusColor: string;
   canArchiveTask: boolean;
   archiving: boolean;
@@ -26,7 +27,6 @@ interface TaskDetailsHeroProps {
   onApprove: () => void;
   onReturnToWork: () => void;
 
-  // новые пропсы для редактирования
   canEditTask: boolean;
   isEditingTask: boolean;
   editName: string;
@@ -45,6 +45,7 @@ export default function TaskDetailsHero({
   title,
   description,
   score,
+  createdByName,
   currentStatusColor,
   canArchiveTask,
   archiving,
@@ -114,6 +115,12 @@ export default function TaskDetailsHero({
               <Text mt="sm" size="sm" c="dimmed" className={styles.descriptionText}>
                 {description || 'Без описания'}
               </Text>
+
+              {createdByName && (
+                <Text size="sm" c="dimmed" mt={8}>
+                  Инициатор: {createdByName}
+                </Text>
+              )}
             </>
           )}
         </div>

@@ -136,6 +136,7 @@ export default function TaskEditableSection({
         title={taskDetails.name}
         description={taskDetails.description}
         score={taskDetails.score}
+        createdByName={taskDetails.created_by_name}
         currentStatusColor={currentStatusColor}
         canArchiveTask={canArchiveTask}
         archiving={archiving}
