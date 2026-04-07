@@ -52,6 +52,26 @@ if (!empty($busyParticipant)) {
     exit;
 }
 
+$teamsCountQuery = "
+    select count(*) as cnt
+    from canban.canban_team
+    where task_id = $taskId
+";
+
+$teamsCountResult = $pg_db->Query($teamsCountQuery, true);
+$teamsCount = (int)($teamsCountResult[0]['cnt'] ?? 0);
+
+if ($teamsCount >= 3) {
+    $pg_db->Close();
+
+    http_response_code(400);
+    echo json_encode([
+        'ok' => false,
+        'message' => 'Нельзя создать больше 3 команд по задаче',
+    ], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
 $teamQuery = "
     insert into canban.canban_team (
         task_id,

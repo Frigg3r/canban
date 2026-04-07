@@ -151,7 +151,11 @@ export default function TaskDetailsModal({
     Boolean(currentTeam && Number(taskDetails?.approved_team_id) === Number(currentTeam.id));
 
   const canRemoveParticipant = (tabNum: number) =>
-    getCanRemoveParticipant(currentUser, tabNum);
+    getCanRemoveParticipant(
+      currentUser,
+      tabNum,
+      taskDetails?.board_status ?? 'backlog'
+    );
 
   const canSubmitComment = getCanSubmitComment(
     canCommentCurrentTeam,
@@ -372,6 +376,7 @@ export default function TaskDetailsModal({
         });
 
         await onTaskChanged();
+        onClose();
       },
       successMessage: 'Карточка принята',
       errorMessage: 'Не удалось принять карточку',
@@ -407,6 +412,7 @@ export default function TaskDetailsModal({
         });
 
         await onTaskChanged();
+        onClose();
       },
       successMessage: 'Карточка отправлена на доработку',
       errorMessage: 'Не удалось вернуть карточку в работу',

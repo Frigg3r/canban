@@ -35,14 +35,14 @@ $statusMap = [
     'review' => 2,
 ];
 
-if (!isset($statusMap[$status])) {
-    http_response_code(400);
-    echo json_encode([
-        'ok' => false,
-        'message' => 'Недопустимый статус',
-    ], JSON_UNESCAPED_UNICODE);
-    exit;
-}
+    if (!isset($statusMap[$status])) {
+        http_response_code(400);
+        echo json_encode([
+            'ok' => false,
+            'message' => 'Недопустимый статус',
+        ], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
 
 $statusId = $statusMap[$status];
 

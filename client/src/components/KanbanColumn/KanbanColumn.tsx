@@ -1,4 +1,4 @@
-import { Group, Paper, Stack, Text, ThemeIcon } from '@mantine/core';
+import { Box, Group, Paper, Stack, Text, ThemeIcon } from '@mantine/core';
 import { IconDots } from '@tabler/icons-react';
 import type { ReactNode, DragEvent } from 'react';
 import type { KanbanStatus } from '../../types/kanban';
@@ -46,12 +46,11 @@ export default function KanbanColumn({
       p="md"
       withBorder
       className={styles.column}
-      onDragOver={(event: DragEvent<HTMLDivElement>) => {
-        event.preventDefault();
-      }}
-      onDrop={() => onDropTask?.(status)}
       style={{
         borderTop: `8px solid var(--mantine-color-${meta.color}-6)`,
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
       <Group justify="space-between" mb="md">
@@ -70,8 +69,19 @@ export default function KanbanColumn({
         </Text>
       </Group>
 
-      {/* используем стек, чтобы расположить вертикально карточки */}
-      <Stack gap="md">{children}</Stack>
+      <Box
+        onDragOver={(event: DragEvent<HTMLDivElement>) => {
+          event.preventDefault();
+        }}
+        onDrop={() => onDropTask?.(status)}
+        style={{
+          flex: 1,
+          minHeight: 420,
+        }}
+      >
+        {/* используем стек, чтобы расположить вертикально карточки */}
+        <Stack gap="md">{children}</Stack>
+      </Box>
     </Paper>
   );
 }

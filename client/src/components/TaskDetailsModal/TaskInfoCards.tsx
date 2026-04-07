@@ -132,6 +132,8 @@ export default function TaskInfoCards({
                 value={editQuota}
                 onChange={(value) => onEditQuotaChange(String(value ?? ''))}
                 min={1}
+                max={3}
+                error={Number(editQuota) > 3 ? 'Максимум 3' : null}
                 radius="md"
                 size="sm"
               />

@@ -42,22 +42,36 @@ $query = "
     )
     select
         row_number() over (
-            order by coalesce(sum(csa.score), 0) desc, cu.fio asc
+            order by coalesce(sum(
+                case
+                    when t.id is not null then csa.score
+                    else 0
+                end
+            ), 0) desc, cu.fio asc
         )::integer as place,
         cu.tab_num,
         cu.fio,
         cu.email,
         cr.id as role_id,
         cr.name as role_name,
-        coalesce(sum(csa.score), 0) as total_score
+        coalesce(sum(
+            case
+                when t.id is not null then csa.score
+                else 0
+            end
+        ), 0) as total_score
     from canban.canban_user cu
     inner join canban.canban_role cr
         on cr.id = cu.role_id
     cross join period p
     left join canban.canban_score_accrual csa
         on csa.tab_num = cu.tab_num
-       and csa.accrued_at >= p.date_from
-       and csa.accrued_at < p.date_to
+    left join canban.canban_team ct
+        on ct.id = csa.team_id
+    left join canban.canban_task t
+        on t.id = ct.task_id
+       and t.deadline >= p.date_from
+       and t.deadline < p.date_to
     group by
         cu.tab_num,
         cu.fio,

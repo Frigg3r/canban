@@ -38,7 +38,6 @@ $checkQuery = "
     select id
     from canban.canban_task
     where id = $taskId
-      and status_id = 1
       and is_archived = false
 ";
 
@@ -48,7 +47,7 @@ if (!$task || count($task) === 0) {
     http_response_code(400);
     echo json_encode([
         'ok' => false,
-        'message' => 'Редактировать можно только карточку в бэклоге',
+        'message' => 'Карточку не удалось найти или она в архиве',
     ], JSON_UNESCAPED_UNICODE);
     exit;
 }

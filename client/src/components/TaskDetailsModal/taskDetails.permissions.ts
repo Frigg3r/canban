@@ -45,7 +45,15 @@ export function getCanReviewTeam(
   return getIsManager(currentUser) && currentTeam?.status === 'review';
 }
 
-export function getCanRemoveParticipant(currentUser: CurrentUserLike, tabNum: number) {
+export function getCanRemoveParticipant(
+  currentUser: CurrentUserLike,
+  tabNum: number,
+  boardStatus: KanbanStatus
+) {
+  if (boardStatus === 'done') {
+    return false;
+  }
+
   return (
     getIsManager(currentUser) ||
     Number(tabNum) === Number(currentUser.tab_num)

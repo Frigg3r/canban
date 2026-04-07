@@ -42,10 +42,11 @@ export default function CreateTaskModal({
   const canSubmit = useMemo(() => {
     return Boolean(
       trimmedName &&
-        trimmedDescription &&
-        deadline &&
-        numericScore > 0 &&
-        numericQuota > 0
+      trimmedDescription &&
+      deadline &&
+      numericScore > 0 &&
+      numericQuota >= 1 &&
+      numericQuota <= 3
     );
   }, [trimmedName, trimmedDescription, deadline, numericScore, numericQuota]);
 
@@ -126,6 +127,7 @@ export default function CreateTaskModal({
             value={quota}
             onChange={setQuota}
             min={1}
+            error={Number(quota) > 3 ? 'Максимум 3' : null}
             required
             radius="md"
             size="md"

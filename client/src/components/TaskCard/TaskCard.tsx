@@ -100,8 +100,9 @@ function TaskCard({ task, onClick, onDragStart }: TaskCardProps) {
             <ThemeIcon variant="light" size="sm" radius="md" color="blue">
               <IconUsers size={14} />
             </ThemeIcon>
+
             <Text size="sm" c="dimmed">
-              {task.participants_count}/{task.quota}
+              Команда №{task.team_id}
             </Text>
           </Group>
         ) : (

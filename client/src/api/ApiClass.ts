@@ -20,10 +20,15 @@ export class BaseApi {
       headers,
     });
 
+    const text = await response.text();
+    const data = text ? JSON.parse(text) : null;
+
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      throw new Error(
+        data?.message || `HTTP ${response.status}: ${response.statusText}`
+      );
     }
 
-    return (await response.json()) as T;
+    return data as T;
   }
 }
