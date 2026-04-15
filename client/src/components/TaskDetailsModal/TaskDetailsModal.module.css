@@ -5,6 +5,7 @@
 
 .descriptionText {
   line-height: 1.6;
+  overflow-wrap: anywhere;
 }
 
 .commentCard {
@@ -14,15 +15,19 @@
 
 .commentMeta {
   flex: 1;
+  overflow-wrap: anywhere;
 }
 
 .commentText {
   white-space: pre-wrap;
   line-height: 1.5;
+  overflow-wrap: anywhere;
+  min-width: 0;
 }
 
 .heroContent {
   flex: 1;
+  min-width: 0;
 }
 
 .scoreInput {

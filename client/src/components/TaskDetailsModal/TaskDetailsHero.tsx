@@ -92,8 +92,13 @@ export default function TaskDetailsHero({
             </Stack>
           ) : (
             <>
-              <Group gap="xs" align="center" wrap="nowrap">
-                <Text fw={800} size="xl" lh={1.2}>
+              <Group gap="xs" align="flex-start" wrap="wrap">
+                <Text
+                  fw={800}
+                  size="xl"
+                  lh={1.2}
+                  style={{ flex: 1, minWidth: 0, overflowWrap: 'anywhere' }}
+                >
                   {title}
                 </Text>
 

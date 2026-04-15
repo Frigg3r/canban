@@ -81,7 +81,12 @@ function TaskCard({ task, onClick, onDragStart }: TaskCardProps) {
       }}
     >
       <Group justify="space-between" align="flex-start" gap="xs">
-        <Text fw={800} fz={18} lh={1.2} style={{ flex: 1 }}>
+        <Text
+          fw={800}
+          fz={18}
+          lh={1.2}
+          style={{ flex: 1, minWidth: 0, overflowWrap: 'anywhere' }}
+        >
           {task.name}
         </Text>
 
@@ -90,7 +95,13 @@ function TaskCard({ task, onClick, onDragStart }: TaskCardProps) {
         </Badge>
       </Group>
 
-      <Text c="dimmed" size="sm" mt={10} lineClamp={3}>
+      <Text
+        c="dimmed"
+        size="sm"
+        mt={10}
+        lineClamp={3}
+        style={{ minWidth: 0, overflowWrap: 'anywhere' }}
+      >
         {task.description || 'Без описания'}
       </Text>
 
