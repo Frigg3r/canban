@@ -9,13 +9,18 @@ import {
 import styles from './RatingPage.module.css';
 
 interface PodiumCardProps {
-  user: KanbanRatingUser;
+  place: number;
+  users: KanbanRatingUser[];
   raised?: boolean;
 }
 
-export default function PodiumCard({ user, raised = false }: PodiumCardProps) {
-  const place = normalizePlace(user.place);
-  const theme = getPlaceTheme(place);
+export default function PodiumCard({
+  place,
+  users,
+  raised = false,
+}: PodiumCardProps) {
+  const normalizedPlace = normalizePlace(place);
+  const theme = getPlaceTheme(normalizedPlace);
 
   return (
     <Paper
@@ -39,7 +44,7 @@ export default function PodiumCard({ user, raised = false }: PodiumCardProps) {
             color: theme.iconColor,
           }}
         >
-          {getPlaceIcon(place)}
+          {getPlaceIcon(normalizedPlace)}
         </ThemeIcon>
 
         <Badge
@@ -51,24 +56,28 @@ export default function PodiumCard({ user, raised = false }: PodiumCardProps) {
             color: theme.badgeText,
           }}
         >
-          {getPlaceLabel(place).toUpperCase()}
+          {getPlaceLabel(normalizedPlace).toUpperCase()}
         </Badge>
 
-        <Text fw={800} size="lg" ta="center" lh={1.25}>
-          {user.fio}
-        </Text>
+        <Stack gap="sm" w="100%">
+          {users.map((user) => (
+            <Paper key={user.tab_num} radius="lg" p="md" w="100%" className={styles.scoreBox}>
+              <Stack gap={2} align="center">
+                <Text fw={800} size="lg" ta="center" lh={1.25}>
+                  {user.fio}
+                </Text>
 
-        <Paper radius="lg" p="md" w="100%" className={styles.scoreBox}>
-          <Stack gap={2} align="center">
-            <Text fw={900} size="30px" lh={1} c={theme.scoreColor}>
-              {user.total_score}
-            </Text>
+                <Text fw={900} size="30px" lh={1} c={theme.scoreColor}>
+                  {user.total_score}
+                </Text>
 
-            <Text size="xs" c="dimmed">
-              баллов за квартал
-            </Text>
-          </Stack>
-        </Paper>
+                <Text size="xs" c="dimmed">
+                  баллов за квартал
+                </Text>
+              </Stack>
+            </Paper>
+          ))}
+        </Stack>
       </Stack>
     </Paper>
   );

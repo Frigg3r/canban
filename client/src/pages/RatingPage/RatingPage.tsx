@@ -62,8 +62,14 @@ export default function RatingPage({ onBackClick }: RatingPageProps) {
     loadRating();
   }, [quarter]);
 
-  const [firstPlace = null, secondPlace = null, thirdPlace = null] = rating;
+  const firstPlaceUsers = rating.filter((user) => Number(user.place) === 1);
+  const secondPlaceUsers = rating.filter((user) => Number(user.place) === 2);
+  const thirdPlaceUsers = rating.filter((user) => Number(user.place) === 3);
 
+  const firstPlace = firstPlaceUsers[0] ?? null;
+  const secondPlace = secondPlaceUsers[0] ?? null;
+  const thirdPlace = thirdPlaceUsers[0] ?? null;
+  
   if (loading) {
     return (
       <Center h="100vh">
@@ -124,15 +130,15 @@ export default function RatingPage({ onBackClick }: RatingPageProps) {
         {(firstPlace || secondPlace || thirdPlace) && (
           <Grid mt="lg" gutter="md" align="end">
             <Grid.Col span={{ base: 12, md: 4 }}>
-              {secondPlace ? <PodiumCard user={secondPlace} /> : null}
+              <PodiumCard place={2} users={secondPlaceUsers} />
             </Grid.Col>
 
             <Grid.Col span={{ base: 12, md: 4 }}>
-              {firstPlace ? <PodiumCard user={firstPlace} raised /> : null}
+              <PodiumCard place={1} users={firstPlaceUsers} raised />
             </Grid.Col>
 
             <Grid.Col span={{ base: 12, md: 4 }}>
-              {thirdPlace ? <PodiumCard user={thirdPlace} /> : null}
+              <PodiumCard place={3} users={thirdPlaceUsers} />
             </Grid.Col>
           </Grid>
         )}
