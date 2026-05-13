@@ -115,6 +115,10 @@ class KanbanApi extends BaseApi {
     return this.requestData<KanbanAvailableUser[]>('/get-directory-users.php');
   }
 
+  getTaskInitiators() {
+    return this.requestData<KanbanAvailableUser[]>('/get-task-initiators.php');
+  }
+
   removeUserFromTeam(payload: RemoveUserFromTeamPayload) {
     return this.requestData<null>('/remove-user-from-team.php', {
       method: 'POST',

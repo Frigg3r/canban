@@ -45,6 +45,8 @@ export interface KanbanTaskDetails {
   board_status: KanbanStatus;
   created_by_tab_num: number | null;
   created_by_name: string | null;
+  initiator_tab_num: number | null;
+  initiator_name: string | null;
   approved_team_id: number | null;
   approved_by_tab_num: number | null;
   approved_by_name: string | null;

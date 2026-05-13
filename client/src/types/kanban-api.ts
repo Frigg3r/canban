@@ -7,6 +7,7 @@ export interface CreateTaskPayload {
   quota: number;
   deadline: string;
   created_by_tab_num: number;
+  initiator_tab_num?: number | null;
 }
 
 export interface UpdateTaskPayload {

@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Button, Group, Modal, NumberInput, Stack, TextInput, Textarea } from '@mantine/core';
+import { Button, Group, Modal, NumberInput, Select, Stack, TextInput, Textarea } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
 import type { CreateTaskPayload } from '../../types/kanban-api';
+import type { KanbanAvailableUser } from '../../types/kanban';
 
 interface CreateTaskModalProps {
   opened: boolean;
   onClose: () => void;
   onSubmit: (values: Omit<CreateTaskPayload, 'created_by_tab_num'>) => void;
   loading?: boolean;
+  initiators?: KanbanAvailableUser[];
 }
 
 export default function CreateTaskModal({
@@ -15,12 +17,14 @@ export default function CreateTaskModal({
   onClose,
   onSubmit,
   loading = false,
+  initiators = [],
 }: CreateTaskModalProps) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [score, setScore] = useState<number | string>(10);
   const [quota, setQuota] = useState<number | string>(1);
   const [deadline, setDeadline] = useState<string | null>(null);
+  const [initiatorTabNum, setInitiatorTabNum] = useState<string | null>(null);
 
   // сброс формы
   useEffect(() => {
@@ -30,6 +34,7 @@ export default function CreateTaskModal({
       setScore(10);
       setQuota(1);
       setDeadline(null);
+      setInitiatorTabNum(null);
     }
   }, [opened]);
 
@@ -45,8 +50,7 @@ export default function CreateTaskModal({
       trimmedDescription &&
       deadline &&
       numericScore > 0 &&
-      numericQuota >= 1 &&
-      numericQuota <= 3
+      numericQuota > 0
     );
   }, [trimmedName, trimmedDescription, deadline, numericScore, numericQuota]);
 
@@ -62,6 +66,7 @@ export default function CreateTaskModal({
       score: numericScore,
       quota: numericQuota,
       deadline,
+      initiator_tab_num: initiatorTabNum ? Number(initiatorTabNum) : null,
     });
   };
 
@@ -109,6 +114,22 @@ export default function CreateTaskModal({
           required
           radius="md"
           size="md"
+        />
+
+        <Select
+          label="Инициатор"
+          placeholder="Если не выбран — будет текущий пользователь"
+          data={initiators.map((user) => ({
+            value: String(user.tab_num),
+            label: user.fio,
+          }))}
+          value={initiatorTabNum}
+          onChange={setInitiatorTabNum}
+          searchable
+          clearable
+          radius="md"
+          size="md"
+          nothingFoundMessage="Инициаторы не найдены"
         />
 
         <Group grow align="flex-start">

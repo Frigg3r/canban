@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Box, Center, Grid, Loader, Text } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { kanbanApi } from '../../api/kanban';
-import type { KanbanStatus, KanbanTask } from '../../types/kanban';
+import type { KanbanAvailableUser, KanbanStatus, KanbanTask } from '../../types/kanban';
 import type { CreateTaskPayload } from '../../types/kanban-api';
 
 import KanbanHeader from '../KanbanHeader/KanbanHeader';
@@ -58,6 +58,7 @@ export default function KanbanBoard({
   onRatingClick: () => void;
 }) {
   const [tasks, setTasks] = useState<KanbanTask[]>([]);
+  const [taskInitiators, setTaskInitiators] = useState<KanbanAvailableUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [createTaskOpened, setCreateTaskOpened] = useState(false);
@@ -95,8 +96,19 @@ export default function KanbanBoard({
     }
   };
 
+  const loadTaskInitiators = async () => {
+    try {
+      const data = await kanbanApi.getTaskInitiators();
+      setTaskInitiators(data);
+    } catch (err) {
+      console.error('Ошибка загрузки инициаторов:', err);
+      showError('Не удалось загрузить список инициаторов');
+    }
+  };
+
   useEffect(() => {
     loadTasks(true);
+    loadTaskInitiators();
   }, []);
 
   const runDropAction = async (
@@ -293,6 +305,7 @@ export default function KanbanBoard({
         opened={createTaskOpened}
         onClose={() => setCreateTaskOpened(false)}
         onSubmit={handleCreateTaskSubmit}
+        initiators={taskInitiators}
       />
 
       <CreateUserModal

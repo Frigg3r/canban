@@ -17,7 +17,7 @@ interface TaskDetailsHeroProps {
   title: string;
   description: string | null;
   score: number;
-  createdByName: string | null;
+  initiatorName: string | null;
   currentStatusColor: string;
   canArchiveTask: boolean;
   archiving: boolean;
@@ -45,7 +45,7 @@ export default function TaskDetailsHero({
   title,
   description,
   score,
-  createdByName,
+  initiatorName,
   currentStatusColor,
   canArchiveTask,
   archiving,
@@ -121,9 +121,9 @@ export default function TaskDetailsHero({
                 {description || 'Без описания'}
               </Text>
 
-              {createdByName && (
+              {initiatorName && (
                 <Text size="sm" c="dimmed" mt={8}>
-                  Инициатор: {createdByName}
+                  Инициатор: {initiatorName}
                 </Text>
               )}
             </>
