@@ -394,6 +394,7 @@ export default function TaskDetailsModal({
         await kanbanApi.changeTeamStatus({
           team_id: Number(currentTeam.id),
           status: 'inProgress',
+          tab_num: currentUser.tab_num,
         });
       },
       afterSuccess: async () => {

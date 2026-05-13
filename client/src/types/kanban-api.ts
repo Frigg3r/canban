@@ -43,6 +43,7 @@ export interface RemoveUserFromTeamPayload {
 export interface ChangeTeamStatusPayload {
   team_id: number;
   status: TeamWorkflowStatus;
+  tab_num: number; 
 }
 
 export interface ReturnTaskToBacklogPayload {

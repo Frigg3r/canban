@@ -186,6 +186,7 @@ export default function KanbanBoard({
             kanbanApi.changeTeamStatus({
               team_id: draggedTask.team_id!,
               status: 'review',
+              tab_num: currentUser.tab_num,
             }),
           'Задача отправлена на проверку'
         );
