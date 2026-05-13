@@ -12,12 +12,14 @@ interface PodiumCardProps {
   place: number;
   users: KanbanRatingUser[];
   raised?: boolean;
+  scoreLabel?: string;
 }
 
 export default function PodiumCard({
   place,
   users,
   raised = false,
+  scoreLabel = 'баллов за квартал',
 }: PodiumCardProps) {
   const normalizedPlace = normalizePlace(place);
   const theme = getPlaceTheme(normalizedPlace);
@@ -72,7 +74,7 @@ export default function PodiumCard({
                 </Text>
 
                 <Text size="xs" c="dimmed">
-                  баллов за квартал
+                  {scoreLabel}
                 </Text>
               </Stack>
             </Paper>

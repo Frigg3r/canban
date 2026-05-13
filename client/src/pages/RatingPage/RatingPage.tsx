@@ -10,6 +10,7 @@ import {
   Loader,
   Paper,
   Select,
+  SegmentedControl,
   SimpleGrid,
   Stack,
   Text,
@@ -32,10 +33,13 @@ interface RatingPageProps {
   onBackClick: () => void;
 }
 
+type RatingType = 'performers' | 'initiators';
+
 export default function RatingPage({ onBackClick }: RatingPageProps) {
   const [rating, setRating] = useState<KanbanRatingUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [quarter, setQuarter] = useState(getCurrentQuarter());
+  const [ratingType, setRatingType] = useState<RatingType>('performers');
 
   const currentYear = getCurrentYear();
 
@@ -43,7 +47,11 @@ export default function RatingPage({ onBackClick }: RatingPageProps) {
     try {
       setLoading(true);
 
-      const data = await kanbanApi.getRating(currentYear, Number(quarter));
+      const data =
+        ratingType === 'performers'
+          ? await kanbanApi.getRating(currentYear, Number(quarter))
+          : await kanbanApi.getInitiatorRating(currentYear, Number(quarter));
+
       setRating(data);
     } catch (error) {
       console.error('Ошибка загрузки рейтинга:', error);
@@ -60,7 +68,7 @@ export default function RatingPage({ onBackClick }: RatingPageProps) {
 
   useEffect(() => {
     loadRating();
-  }, [quarter]);
+  }, [quarter, ratingType]);
 
   const firstPlaceUsers = rating.filter((user) => Number(user.place) === 1);
   const secondPlaceUsers = rating.filter((user) => Number(user.place) === 2);
@@ -69,7 +77,37 @@ export default function RatingPage({ onBackClick }: RatingPageProps) {
   const firstPlace = firstPlaceUsers[0] ?? null;
   const secondPlace = secondPlaceUsers[0] ?? null;
   const thirdPlace = thirdPlaceUsers[0] ?? null;
-  
+
+  const ratingTitle =
+    ratingType === 'performers'
+      ? 'Рейтинг исполнителей'
+      : 'Рейтинг инициаторов';
+
+  const ratingSubtitle =
+    ratingType === 'performers'
+      ? 'Лидеры по баллам за выполненные задачи'
+      : 'Лидеры по задачам, закрытым в срок';
+
+  const totalLabel =
+    ratingType === 'performers'
+      ? 'Всего участников'
+      : 'Всего инициаторов';
+
+  const maxScoreLabel =
+    ratingType === 'performers'
+      ? 'Максимум баллов'
+      : 'Максимум задач в срок';
+
+  const podiumScoreLabel =
+    ratingType === 'performers'
+      ? 'баллов за квартал'
+      : 'задач в срок за квартал';
+
+  const tableScoreHeader =
+    ratingType === 'performers'
+      ? 'Баллы'
+      : 'Задач в срок';
+
   if (loading) {
     return (
       <Center h="100vh">
@@ -91,17 +129,28 @@ export default function RatingPage({ onBackClick }: RatingPageProps) {
 
                 <div>
                   <Text fw={900} size="32px" lh={1.1}>
-                    Рейтинг сотрудников
+                    {ratingTitle}
                   </Text>
 
                   <Text c="dimmed" size="sm">
-                    Лидеры по баллам за выбранный квартал
+                    {ratingSubtitle}
                   </Text>
                 </div>
               </Group>
             </Stack>
 
             <Group>
+              <SegmentedControl
+                value={ratingType}
+                onChange={(value) => setRatingType(value as RatingType)}
+                data={[
+                  { value: 'performers', label: 'Исполнители' },
+                  { value: 'initiators', label: 'Инициаторы' },
+                ]}
+                radius="md"
+                color="violet"
+              />
+
               <Button
                 variant="light"
                 color="violet"
@@ -130,15 +179,28 @@ export default function RatingPage({ onBackClick }: RatingPageProps) {
         {(firstPlace || secondPlace || thirdPlace) && (
           <Grid mt="lg" gutter="md" align="end">
             <Grid.Col span={{ base: 12, md: 4 }}>
-              <PodiumCard place={2} users={secondPlaceUsers} />
+              <PodiumCard
+                place={2}
+                users={secondPlaceUsers}
+                scoreLabel={podiumScoreLabel}
+              />
             </Grid.Col>
 
             <Grid.Col span={{ base: 12, md: 4 }}>
-              <PodiumCard place={1} users={firstPlaceUsers} raised />
+              <PodiumCard
+                place={1}
+                users={firstPlaceUsers}
+                raised
+                scoreLabel={podiumScoreLabel}
+              />
             </Grid.Col>
 
             <Grid.Col span={{ base: 12, md: 4 }}>
-              <PodiumCard place={3} users={thirdPlaceUsers} />
+              <PodiumCard
+                place={3}
+                users={thirdPlaceUsers}
+                scoreLabel={podiumScoreLabel}
+              />
             </Grid.Col>
           </Grid>
         )}
@@ -146,7 +208,7 @@ export default function RatingPage({ onBackClick }: RatingPageProps) {
         <SimpleGrid cols={{ base: 1, md: 3 }} mt="lg" spacing="md">
           <Paper radius="xl" p="lg" withBorder className={styles.statCard}>
             <Text c="dimmed" size="sm">
-              Всего участников
+              {totalLabel}
             </Text>
             <Text fw={900} size="30px" lh={1.1}>
               {rating.length}
@@ -155,7 +217,7 @@ export default function RatingPage({ onBackClick }: RatingPageProps) {
 
           <Paper radius="xl" p="lg" withBorder className={styles.statCard}>
             <Text c="dimmed" size="sm">
-              Максимум баллов
+              {maxScoreLabel}
             </Text>
             <Text fw={900} size="30px" lh={1.1}>
               {firstPlace?.total_score ?? 0}
@@ -175,7 +237,7 @@ export default function RatingPage({ onBackClick }: RatingPageProps) {
         <Paper mt="lg" radius="xl" p="lg" withBorder className={styles.tableCard}>
           <Group justify="space-between" mb="md">
             <Text fw={800} size="lg">
-              Общий рейтинг
+              {ratingTitle}
             </Text>
 
             <Badge variant="light" color="violet" radius="sm">
@@ -183,7 +245,10 @@ export default function RatingPage({ onBackClick }: RatingPageProps) {
             </Badge>
           </Group>
 
-          <RatingTable rating={rating} />
+          <RatingTable
+            rating={rating}
+            scoreHeader={tableScoreHeader}
+          />
         </Paper>
       </Container>
     </Box>

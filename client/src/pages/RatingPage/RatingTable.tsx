@@ -5,9 +5,13 @@ import styles from './RatingPage.module.css';
 
 interface RatingTableProps {
   rating: KanbanRatingUser[];
+  scoreHeader?: string;
 }
 
-export default function RatingTable({ rating }: RatingTableProps) {
+export default function RatingTable({
+  rating,
+  scoreHeader = 'Баллы',
+}: RatingTableProps) {
   if (rating.length === 0) {
     return (
       <Center py="xl">
@@ -23,7 +27,7 @@ export default function RatingTable({ rating }: RatingTableProps) {
           <Table.Th>Место</Table.Th>
           <Table.Th>ФИО</Table.Th>
           <Table.Th>Табельный</Table.Th>
-          <Table.Th className={styles.tableAlignRight}>Баллы</Table.Th>
+          <Table.Th className={styles.tableAlignRight}>{scoreHeader}</Table.Th>
         </Table.Tr>
       </Table.Thead>
 

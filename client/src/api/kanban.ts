@@ -175,6 +175,17 @@ class KanbanApi extends BaseApi {
     );
   }
 
+  getInitiatorRating(year: number, quarter: number) {
+    const query = new URLSearchParams({
+      year: String(year),
+      quarter: String(quarter),
+    });
+
+    return this.requestData<KanbanRatingUser[]>(
+      `/get-initiator-rating.php?${query.toString()}`
+    );
+  }
+
   approveTeamResult(payload: ApproveTeamResultPayload) {
     return this.requestData<{ task_id: number; team_id: number }>(
       '/approve-team-result.php',
