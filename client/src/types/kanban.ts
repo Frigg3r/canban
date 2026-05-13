@@ -10,6 +10,7 @@ export interface KanbanTask {
   deadline_short: string;
   deadline_full: string;
   participants_count: number;
+  active_teams_count: number;
   board_status: KanbanStatus;
   team_id: number | null;
 }

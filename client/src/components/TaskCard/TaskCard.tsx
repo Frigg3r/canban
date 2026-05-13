@@ -64,6 +64,10 @@ function TaskCard({ task, onClick, onDragStart }: TaskCardProps) {
   // не показывать дедлайн, если статус - готово
   const shouldShowDeadline = task.board_status !== 'done';
 
+  // задача в бэклоге, но ее уже взяла хотя бы одна команда
+  const isBacklogTaken =
+    task.board_status === 'backlog' && task.active_teams_count > 0;
+
   return (
     <Paper
       withBorder
@@ -116,8 +120,14 @@ function TaskCard({ task, onClick, onDragStart }: TaskCardProps) {
               Команда №{task.team_id}
             </Text>
           </Group>
+        ) : isBacklogTaken ? (
+          <Badge variant="light" color="blue" radius="sm">
+            Уже взяли: {task.active_teams_count}
+          </Badge>
         ) : (
-          <div />
+          <Badge variant="light" color="green" radius="sm">
+            Свободна
+          </Badge>
         )}
 
         {shouldShowDeadline ? (
