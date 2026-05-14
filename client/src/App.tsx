@@ -5,6 +5,7 @@ import type { KanbanCurrentUser } from './types/kanban';
 import { AppAuthContext } from './app-auth';
 import KanbanBoard from './components/KanbanBoard/KanbanBoard';
 import RatingPage from './pages/RatingPage/RatingPage';
+import WelcomeSplash from './components/WelcomeSplash/WelcomeSplash';
 
 type AppView = 'kanban' | 'rating';
 
@@ -18,6 +19,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [view, setView] = useState<AppView>('kanban');
+  const [showWelcome, setShowWelcome] = useState(false);
 
   useEffect(() => {
     // при старте приложения загружаем текущего пользователя
@@ -28,6 +30,7 @@ export default function App() {
       try {
         const user = await kanbanApi.getCurrentUser(getCurrentTabNum());
         setCurrentUser(user);
+        setShowWelcome(true);
       } catch (err) {
         console.error('Ошибка загрузки текущего пользователя:', err);
         setError(
@@ -60,6 +63,13 @@ export default function App() {
   } else {
     content = (
       <AppAuthContext.Provider value={{ currentUser }}>
+        {showWelcome && (
+          <WelcomeSplash
+            imageSrc={`${import.meta.env.BASE_URL}welcome/kanban-summer.png`}
+            onFinish={() => setShowWelcome(false)}
+          />
+        )}
+
         {view === 'kanban' ? (
           <KanbanBoard onRatingClick={() => setView('rating')} />
         ) : (

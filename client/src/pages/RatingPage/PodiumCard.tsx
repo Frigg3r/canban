@@ -1,7 +1,6 @@
-import { Badge, Paper, Stack, Text, ThemeIcon } from '@mantine/core';
+import { Badge, Image, Paper, Stack, Text } from '@mantine/core';
 import type { KanbanRatingUser } from '../../types/kanban';
 import {
-  getPlaceIcon,
   getPlaceLabel,
   getPlaceTheme,
   normalizePlace,
@@ -23,6 +22,7 @@ export default function PodiumCard({
 }: PodiumCardProps) {
   const normalizedPlace = normalizePlace(place);
   const theme = getPlaceTheme(normalizedPlace);
+  const placeImage = `/rating/place-${normalizedPlace}.png`;
 
   return (
     <Paper
@@ -37,17 +37,14 @@ export default function PodiumCard({
       }}
     >
       <Stack align="center" gap="sm">
-        <ThemeIcon
-          size={74}
+        <Image
+          src={placeImage}
+          alt={getPlaceLabel(normalizedPlace)}
+          w={normalizedPlace === 1 ? 210 : 180}
+          h={normalizedPlace === 1 ? 210 : 180}
           radius="xl"
-          variant="filled"
-          style={{
-            background: theme.iconBackground,
-            color: theme.iconColor,
-          }}
-        >
-          {getPlaceIcon(normalizedPlace)}
-        </ThemeIcon>
+          fit="cover"
+        />
 
         <Badge
           size="lg"
