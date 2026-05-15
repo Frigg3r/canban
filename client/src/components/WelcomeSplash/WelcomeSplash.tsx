@@ -12,11 +12,11 @@ export default function WelcomeSplash({ imageSrc, onFinish }: WelcomeSplashProps
   useEffect(() => {
     const hideTimer = window.setTimeout(() => {
       setIsLeaving(true);
-    }, 1800);
+    }, 2400);
 
     const finishTimer = window.setTimeout(() => {
       onFinish();
-    }, 2600);
+    }, 3200);
 
     return () => {
       window.clearTimeout(hideTimer);
@@ -45,7 +45,7 @@ export default function WelcomeSplash({ imageSrc, onFinish }: WelcomeSplashProps
           height: '100vh',
           overflow: 'hidden',
           transform: isLeaving ? 'translateX(-100%)' : 'translateX(0)',
-          transition: 'transform 800ms cubic-bezier(0.77, 0, 0.175, 1)',
+          transition: 'transform 1200ms cubic-bezier(0.77, 0, 0.175, 1)',
         }}
       >
         <img
@@ -72,7 +72,7 @@ export default function WelcomeSplash({ imageSrc, onFinish }: WelcomeSplashProps
           height: '100vh',
           overflow: 'hidden',
           transform: isLeaving ? 'translateX(100%)' : 'translateX(0)',
-          transition: 'transform 800ms cubic-bezier(0.77, 0, 0.175, 1)',
+          transition: 'transform 1200ms cubic-bezier(0.77, 0, 0.175, 1)',
         }}
       >
         <img
@@ -106,7 +106,7 @@ export default function WelcomeSplash({ imageSrc, onFinish }: WelcomeSplashProps
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          opacity: isLeaving ? 0 : 0.45,
+          opacity: isLeaving ? 0 : 0.75,
           transition: 'opacity 400ms ease',
         }}
       >

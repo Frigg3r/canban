@@ -13,10 +13,18 @@ export default function KanbanHeader({ onRatingClick }: KanbanHeaderProps) {
     <div className={styles.header}>
       <Group justify="space-between" align="center">
         <Group gap="md" align="center">
-          <Stack gap={2}>
-            <Text className={styles.title}>Канбан-доска</Text>
-            <Text className={styles.subtitle}>Отдел ОМУР</Text>
-          </Stack>
+          <Group gap="sm" align="center">
+            <img
+              src={`${import.meta.env.BASE_URL}kanban-logo.svg`}
+              alt="Канбан"
+              className={styles.logo}
+            />
+
+            <Stack gap={2}>
+              <Text className={styles.title}>Канбан-доска</Text>
+              <Text className={styles.subtitle}>Отдел ОМУР</Text>
+            </Stack>
+          </Group>
 
           <Button
             variant="light"

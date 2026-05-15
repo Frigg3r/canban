@@ -65,7 +65,7 @@ export default function App() {
       <AppAuthContext.Provider value={{ currentUser }}>
         {showWelcome && (
           <WelcomeSplash
-            imageSrc={`${import.meta.env.BASE_URL}welcome/kanban-summer.png`}
+            imageSrc={`${import.meta.env.BASE_URL}welcome/kanban-spring.png`}
             onFinish={() => setShowWelcome(false)}
           />
         )}
