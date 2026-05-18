@@ -103,12 +103,15 @@ function TaskCard({ task, onClick, onDragStart }: TaskCardProps) {
         c="dimmed"
         size="sm"
         mt={10}
-        lineClamp={3}
-        style={{ minWidth: 0, overflowWrap: 'anywhere' }}
+        lineClamp={4}
+        style={{
+          whiteSpace: 'pre-wrap',
+          overflowWrap: 'anywhere',
+        }}
       >
         {task.description || 'Без описания'}
       </Text>
-
+      
       <Group justify="space-between" mt="md" align="center">
         {task.board_status !== 'backlog' ? (
           <Group gap="xs">

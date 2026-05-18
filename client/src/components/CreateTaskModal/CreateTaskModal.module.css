@@ -1,0 +1,117 @@
+.modalContent {
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 26px;
+  background: #fdfbff;
+}
+
+.modalBody {
+  min-height: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.modalHeader {
+  display: none;
+}
+
+.hero {
+  flex: 0 0 auto;
+  padding: 22px 28px;
+  color: #ffffff;
+  background:
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.26), transparent 34%),
+    linear-gradient(135deg, #5b21b6 0%, #7c3aed 48%, #a855f7 100%);
+}
+
+.heroIcon {
+  flex: 0 0 auto;
+  box-shadow: 0 12px 30px rgba(76, 29, 149, 0.28);
+}
+
+.heroTitle {
+  font-size: 24px;
+  line-height: 1.1;
+  font-weight: 850;
+  letter-spacing: -0.03em;
+}
+
+.heroSubtitle {
+  max-width: 480px;
+  margin-top: 5px;
+  color: rgba(255, 255, 255, 0.84);
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.content {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 18px 22px 0;
+}
+
+.scrollContent {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: 16px;
+  padding-right: 4px;
+}
+
+.formCard {
+  background: #ffffff;
+  border-color: #eadcff;
+  box-shadow: 0 18px 45px rgba(91, 33, 182, 0.08);
+}
+
+.footer {
+  flex: 0 0 auto;
+  margin-top: 0;
+  padding: 14px 0 16px;
+  border-top: 1px solid #eadcff;
+  background: #fdfbff;
+}
+
+.footerText {
+  max-width: 360px;
+}
+
+.footerButtons {
+  flex: 0 0 auto;
+}
+
+@media (max-width: 640px) {
+  .modalContent {
+    max-height: 92vh;
+  }
+
+  .hero {
+    padding: 20px 22px;
+  }
+
+  .content {
+    padding: 16px 16px 0;
+  }
+
+  .footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .footerText {
+    max-width: none;
+  }
+
+  .footerButtons {
+    width: 100%;
+  }
+
+  .footerButtons button {
+    flex: 1;
+  }
+}

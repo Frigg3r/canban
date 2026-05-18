@@ -4,8 +4,9 @@
 }
 
 .descriptionText {
-  line-height: 1.6;
+  white-space: pre-wrap;
   overflow-wrap: anywhere;
+  line-height: 1.55;
 }
 
 .commentCard {

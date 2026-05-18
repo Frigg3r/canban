@@ -5,7 +5,7 @@ import {
   Modal,
   NumberInput,
   Paper,
-  SimpleGrid,
+  Select,
   Stack,
   Text,
   TextInput,
@@ -14,20 +14,24 @@ import {
 } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
 import {
-  IconCalendar,
-  IconChecklist,
+  IconCalendarDue,
+  IconClipboardPlus,
+  IconFileText,
   IconTargetArrow,
+  IconUserCircle,
   IconUsers,
+  IconWriting,
 } from '@tabler/icons-react';
-import { useAppAuth } from '../../app-auth';
 import type { CreateTaskPayload } from '../../types/kanban-api';
-import styles from './СreateTaskModal.module.css';
+import type { KanbanAvailableUser } from '../../types/kanban';
+import styles from './CreateTaskModal.module.css';
 
 interface CreateTaskModalProps {
   opened: boolean;
   onClose: () => void;
-  onSubmit: (values: CreateTaskPayload) => void;
+  onSubmit: (values: Omit<CreateTaskPayload, 'created_by_tab_num'>) => void;
   loading?: boolean;
+  initiators?: KanbanAvailableUser[];
 }
 
 export default function CreateTaskModal({
@@ -35,15 +39,16 @@ export default function CreateTaskModal({
   onClose,
   onSubmit,
   loading = false,
+  initiators = [],
 }: CreateTaskModalProps) {
-  const { currentUser } = useAppAuth();
-
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [score, setScore] = useState<number | string>(10);
   const [quota, setQuota] = useState<number | string>(1);
   const [deadline, setDeadline] = useState<string | null>(null);
+  const [initiatorTabNum, setInitiatorTabNum] = useState<string | null>(null);
 
+  // сброс формы
   useEffect(() => {
     if (!opened) {
       setName('');
@@ -51,6 +56,7 @@ export default function CreateTaskModal({
       setScore(10);
       setQuota(1);
       setDeadline(null);
+      setInitiatorTabNum(null);
     }
   }, [opened]);
 
@@ -59,6 +65,7 @@ export default function CreateTaskModal({
   const numericScore = Number(score);
   const numericQuota = Number(quota);
 
+  // валидация формы
   const canSubmit = useMemo(() => {
     return Boolean(
       trimmedName &&
@@ -75,13 +82,14 @@ export default function CreateTaskModal({
       return;
     }
 
+    // onSubmit принимаем от родителя (KanbanBoard)
     onSubmit({
       name: trimmedName,
       description: trimmedDescription,
       score: numericScore,
       quota: numericQuota,
       deadline,
-      created_by_tab_num: currentUser.tab_num,
+      initiator_tab_num: initiatorTabNum ? Number(initiatorTabNum) : null,
     });
   };
 
@@ -90,7 +98,7 @@ export default function CreateTaskModal({
       opened={opened}
       onClose={onClose}
       centered
-      size="lg"
+      size={680}
       padding={0}
       title={null}
       overlayProps={{
@@ -104,116 +112,148 @@ export default function CreateTaskModal({
       }}
     >
       <div className={styles.hero}>
-        <Group justify="space-between" align="flex-start" gap="md">
-          <Group gap="md" align="flex-start">
-            <ThemeIcon
-              size={46}
-              radius="xl"
-              variant="white"
-              color="violet"
-              className={styles.heroIcon}
-            >
-              <IconChecklist size={24} />
-            </ThemeIcon>
+        <Group gap="md" align="center" wrap="nowrap">
+          <ThemeIcon
+            size={52}
+            radius="xl"
+            variant="white"
+            color="violet"
+            className={styles.heroIcon}
+          >
+            <IconClipboardPlus size={26} />
+          </ThemeIcon>
 
-            <div>
-              <Text className={styles.heroTitle}>Создание карточки</Text>
-              <Text className={styles.heroSubtitle}>
-                Заполните задачу, укажите баллы, квоту и срок выполнения
-              </Text>
-            </div>
-          </Group>
+          <div>
+            <Text className={styles.heroTitle}>Создать карточку</Text>
+            <Text className={styles.heroSubtitle}>
+              Заполните задачу, назначьте баллы и срок выполнения
+            </Text>
+          </div>
         </Group>
       </div>
 
       <div className={styles.content}>
-        <Paper withBorder radius="xl" p="lg" className={styles.formCard}>
-          <Stack gap="md">
-            <TextInput
-              label="Название"
-              placeholder="Например: Подготовить отчет по KPI"
-              value={name}
-              onChange={(event) => setName(event.currentTarget.value)}
-              required
-              radius="md"
-              size="md"
-              maxLength={200}
-            />
-
-            <Textarea
-              label="Описание"
-              placeholder="Опишите, что нужно сделать и какой результат ожидается"
-              value={description}
-              onChange={(event) => setDescription(event.currentTarget.value)}
-              minRows={4}
-              maxRows={8}
-              autosize
-              required
-              radius="md"
-              size="md"
-            />
-
-            <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md">
-              <NumberInput
-                label="Баллы"
-                value={score}
-                onChange={setScore}
-                min={1}
+        <div className={styles.scrollContent}>
+          <Paper withBorder radius="xl" p="md" className={styles.formCard}>
+            <Stack gap="sm">
+              <TextInput
+                label="Название"
+                placeholder="Введите название карточки"
+                value={name}
+                onChange={(event) => setName(event.currentTarget.value)}
                 required
                 radius="md"
-                size="md"
-                leftSection={<IconTargetArrow size={16} />}
+                size="sm"
+                leftSection={<IconWriting size={16} />}
               />
 
-              <NumberInput
-                label="Квота"
-                value={quota}
-                onChange={setQuota}
-                min={1}
-                max={3}
-                error={numericQuota > 3 ? 'Максимум 3' : null}
+              <Textarea
+                label="Описание"
+                placeholder="Введите описание задачи"
+                value={description}
+                onChange={(event) => setDescription(event.currentTarget.value)}
+                minRows={3}
+                autosize
                 required
                 radius="md"
-                size="md"
-                leftSection={<IconUsers size={16} />}
+                size="sm"
+                leftSection={<IconFileText size={16} />}
+                styles={{
+                  section: {
+                    alignItems: 'flex-start',
+                    paddingTop: 10,
+                  },
+                  input: {
+                    overflow: 'hidden',
+                    resize: 'none',
+                  },
+                }}
               />
+
+              <Select
+                label="Инициатор"
+                placeholder="Если не выбран — будет текущий пользователь"
+                data={initiators.map((user) => ({
+                  value: String(user.tab_num),
+                  label: user.fio,
+                }))}
+                value={initiatorTabNum}
+                onChange={setInitiatorTabNum}
+                searchable
+                clearable
+                radius="md"
+                size="sm"
+                nothingFoundMessage="Инициаторы не найдены"
+                leftSection={<IconUserCircle size={16} />}
+              />
+
+              <Group grow align="flex-start">
+                <NumberInput
+                  label="Баллы"
+                  value={score}
+                  onChange={setScore}
+                  min={1}
+                  required
+                  radius="md"
+                  size="sm"
+                  leftSection={<IconTargetArrow size={16} />}
+                />
+
+                <NumberInput
+                  label="Квота участников"
+                  value={quota}
+                  onChange={setQuota}
+                  min={1}
+                  max={3}
+                  error={Number(quota) > 3 ? 'Максимум 3' : null}
+                  required
+                  radius="md"
+                  size="sm"
+                  leftSection={<IconUsers size={16} />}
+                />
+              </Group>
 
               <DatePickerInput
                 label="Дедлайн"
-                placeholder="Дата"
+                placeholder="Выберите дату"
                 value={deadline}
                 onChange={setDeadline}
                 valueFormat="DD.MM.YYYY"
                 dropdownType="popover"
                 radius="md"
-                size="md"
+                size="sm"
                 clearable={false}
                 locale="ru"
                 required
-                leftSection={<IconCalendar size={16} />}
+                leftSection={<IconCalendarDue size={16} />}
               />
-            </SimpleGrid>
-          </Stack>
-        </Paper>
+            </Stack>
+          </Paper>
+        </div>
 
         <Group justify="space-between" align="center" className={styles.footer}>
-          <Text size="xs" c="dimmed">
+          <Text size="xs" c="dimmed" className={styles.footerText}>
             После создания карточка появится в бэклоге
           </Text>
 
-          <Group gap="sm">
-            <Button variant="default" radius="md" onClick={onClose}>
+          <Group gap="sm" className={styles.footerButtons}>
+            <Button
+              variant="default"
+              radius="md"
+              onClick={onClose}
+              disabled={loading}
+            >
               Отмена
             </Button>
 
             <Button
-              onClick={handleSubmit}
-              loading={loading}
               color="violet"
               radius="md"
-              disabled={!canSubmit}
+              disabled={!canSubmit || loading}
+              onClick={handleSubmit}
+              loading={loading}
             >
-              Создать карточку
+              Создать
             </Button>
           </Group>
         </Group>
