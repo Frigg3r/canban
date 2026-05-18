@@ -27,11 +27,17 @@ export default function KanbanHeader({ onRatingClick }: KanbanHeaderProps) {
           </Group>
 
           <Button
-            variant="light"
-            color="violet"
             radius="md"
             size="sm"
             onClick={onRatingClick}
+            styles={{
+              root: {
+                background: 'linear-gradient(135deg, #008BFF 0%, #4FC3FF 100%)',
+                color: '#ffffff',
+                border: 'none',
+                fontWeight: 500,
+              },
+            }}
           >
             Рейтинг
           </Button>

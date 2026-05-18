@@ -11,7 +11,7 @@ export default function KanbanActions({
   onCreateTaskClick,
   onCreateUserClick,
 }: KanbanActionsProps) {
-  
+
   if (!canCreateTask) {
     return null;
   }
@@ -19,13 +19,15 @@ export default function KanbanActions({
   return (
     <Group justify="flex-start" mb="md">
       <Button
-        color="violet"
         radius="md"
         size="sm"
         onClick={onCreateTaskClick}
         styles={{
           root: {
-            fontWeight: 600,
+            background: 'linear-gradient(135deg, #602AF2 0%, #a981ff 100%)',
+            color: '#ffffff',
+            border: 'none',
+            fontWeight: 700,
             paddingInline: '14px',
           },
         }}
@@ -34,13 +36,15 @@ export default function KanbanActions({
       </Button>
 
       <Button
-        color="green"
         radius="md"
         size="sm"
         onClick={onCreateUserClick}
         styles={{
           root: {
-            fontWeight: 600,
+            background: 'linear-gradient(135deg, #009573 0%, #22CFA8 100%)',
+            color: '#ffffff',
+            border: 'none',
+            fontWeight: 700,
             paddingInline: '14px',
           },
         }}
