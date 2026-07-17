@@ -7,6 +7,7 @@ import type {
   KanbanTask,
   KanbanTaskDetails,
   KanbanRatingUser,
+  KanbanTaskStats,
 } from '../types/kanban';
 
 import type {
@@ -56,13 +57,16 @@ class KanbanApi extends BaseApi {
     });
   }
 
-  getTaskDetails(taskId: number, teamId?: number | null) {
+  getTaskDetails(taskId: number, teamId?: number | null, tabNum?: number) {
     const query = new URLSearchParams({
       task_id: String(taskId),
     });
 
     if (teamId != null) {
       query.append('team_id', String(teamId));
+    }
+    if (tabNum != null) {
+      query.append('tab_num', String(tabNum));
     }
 
     return this.requestData<KanbanTaskDetails>(
@@ -201,6 +205,25 @@ class KanbanApi extends BaseApi {
       method: 'POST',
       body: JSON.stringify(payload),
     });
+  }
+
+  toggleFavorite(taskId: number, tabNum: number) {
+    return this.requestData<{ is_favorite: boolean }>('/toggle-favorite.php', {
+      method: 'POST',
+      body: JSON.stringify({ task_id: taskId, tab_num: tabNum }),
+    });
+  }
+
+  logView(taskId: number, tabNum: number) {
+    return this.requestData<null>('/log-view.php', {
+      method: 'POST',
+      body: JSON.stringify({ task_id: taskId, tab_num: tabNum }),
+    });
+  }
+
+  getTaskStats(taskId: number) {
+    const query = new URLSearchParams({ task_id: String(taskId) });
+    return this.requestData<KanbanTaskStats>(`/get-task-stats.php?${query.toString()}`);
   }
 }
 

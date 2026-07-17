@@ -11,7 +11,7 @@ type AppView = 'kanban' | 'rating';
 
 function getCurrentTabNum() {
   // временно: пока нет нормальной авторизации
-  return 1001;
+  return 1002;
 }
 
 export default function App() {

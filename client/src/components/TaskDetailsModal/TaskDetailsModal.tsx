@@ -21,6 +21,7 @@ import type {
 import TaskCommentsSection from './TaskCommentsSection';
 import TaskTeamSection from './TaskTeamSection';
 import TaskEditableSection from './TaskEditableSection';
+import TaskStatsModal from './TaskStatsModal';
 import { statusColor, statusLabel } from './taskDetails.constants';
 import {
   getCanArchiveTask,
@@ -63,13 +64,18 @@ export default function TaskDetailsModal({
   const [selectedUserTabNum, setSelectedUserTabNum] = useState<string | null>(null);
   const [archiving, setArchiving] = useState(false);
   const [reviewLoading, setReviewLoading] = useState(false);
+  
+  // Состояние для модалки статистики
+  const [statsOpened, setStatsOpened] = useState(false);
+  
   const { currentUser } = useAppAuth();
 
   const loadTaskDetails = async () => {
     if (taskId == null) return;
     try {
       setLoading(true);
-      const data = await kanbanApi.getTaskDetails(taskId, teamId);
+      // Передаем tab_num для проверки избранного
+      const data = await kanbanApi.getTaskDetails(taskId, teamId, currentUser.tab_num);
       setTaskDetails(data);
     } catch (error) {
       console.error('Ошибка загрузки карточки:', error);
@@ -84,9 +90,7 @@ export default function TaskDetailsModal({
   };
 
   const loadAvailableUsers = async () => {
-    if (taskId == null || teamId == null) {
-      return;
-    }
+    if (taskId == null || teamId == null) return;
     try {
       const data = await kanbanApi.getTeamCandidates(taskId);
       setAvailableUsers(data);
@@ -96,9 +100,11 @@ export default function TaskDetailsModal({
   };
 
   useEffect(() => {
-    if (!opened || taskId == null) {
-      return;
-    }
+    if (!opened || taskId == null) return;
+    
+    // Логируем просмотр при открытии
+    kanbanApi.logView(taskId, currentUser.tab_num).catch(console.error);
+    
     loadTaskDetails();
     if (teamId == null) {
       setAvailableUsers([]);
@@ -115,6 +121,23 @@ export default function TaskDetailsModal({
       setSelectedUserTabNum(null);
     }
   }, [opened]);
+
+  const handleToggleFavorite = async () => {
+    if (!taskId || !taskDetails) return;
+    try {
+      const res = await kanbanApi.toggleFavorite(taskId, currentUser.tab_num);
+      setTaskDetails(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          is_favorite: res.is_favorite,
+          favorites_count: res.is_favorite ? prev.favorites_count + 1 : prev.favorites_count - 1
+        };
+      });
+    } catch (err) {
+      notifications.show({ title: 'Ошибка', message: 'Не удалось обновить избранное', color: 'red' });
+    }
+  };
 
   const isBacklogView = teamId == null;
   const currentTeam =
@@ -133,7 +156,7 @@ export default function TaskDetailsModal({
   const canArchiveTask = getCanArchiveTask(currentUser, currentStatusKey);
   const canEditTask = getCanEditTask(currentUser);
   const canEditQuota = getCanEditQuota(taskDetails?.board_status ?? 'backlog');
-  const canEditScore = (taskDetails?.board_status ?? 'backlog') !== 'done'; // to do: нужно сделать,как везде,было лень и время поздно)))
+  const canEditScore = (taskDetails?.board_status ?? 'backlog') !== 'done';
   const canCommentCurrentTeam = getCanCommentCurrentTeam(currentTeam, currentUser);
   const canEditTeam = getCanEditTeam(isBacklogView, currentTeam, canCommentCurrentTeam);
   const canReviewTeam = getCanReviewTeam(currentUser, currentTeam);
@@ -251,9 +274,9 @@ export default function TaskDetailsModal({
             teams: prev.teams.map((team) =>
               team.id === currentTeam.id
                 ? {
-                  ...team,
-                  comments: team.comments.filter((item) => item.id !== comment.id),
-                }
+                    ...team,
+                    comments: team.comments.filter((item) => item.id !== comment.id),
+                  }
                 : team
             ),
           };
@@ -300,15 +323,15 @@ export default function TaskDetailsModal({
             teams: prev.teams.map((team) =>
               Number(team.id) === teamIdValue
                 ? {
-                  ...team,
-                  participants: [
-                    ...team.participants,
-                    {
-                      tab_num: addedUser.tab_num,
-                      fio: addedUser.fio,
-                    },
-                  ],
-                }
+                    ...team,
+                    participants: [
+                      ...team.participants,
+                      {
+                        tab_num: addedUser.tab_num,
+                        fio: addedUser.fio,
+                      },
+                    ],
+                  }
                 : team
             ),
           };
@@ -413,11 +436,11 @@ export default function TaskDetailsModal({
             teams: prev.teams.map((team) =>
               Number(team.id) === teamIdValue
                 ? {
-                  ...team,
-                  participants: team.participants.filter(
-                    (participant) => Number(participant.tab_num) !== Number(tabNum)
-                  ),
-                }
+                    ...team,
+                    participants: team.participants.filter(
+                      (participant) => Number(participant.tab_num) !== Number(tabNum)
+                    ),
+                  }
                 : team
             ),
           };
@@ -453,154 +476,164 @@ export default function TaskDetailsModal({
   };
 
   return (
-    <Modal
-      opened={opened}
-      onClose={onClose}
-      size={760}
-      centered
-      title={
-        <Group gap="sm">
-          <ThemeIcon variant="light" color={currentStatusColor} radius="xl" size="lg">
-            <IconChecklist size={18} />
-          </ThemeIcon>
-          <Text fw={800} size="lg">
-            Просмотр карточки
-          </Text>
-        </Group>
-      }
-      overlayProps={{
-        backgroundOpacity: 0.55,
-        blur: 3,
-      }}
-      styles={{
-        content: {
-          borderRadius: '22px',
-          overflow: 'hidden',
-          maxHeight: '90vh',
-        },
-        header: {
-          padding: '18px 22px',
-          borderBottom: '1px solid #f1effa',
-          background: 'linear-gradient(180deg,#faf8ff 0%,#ffffff 100%)',
-        },
-        body: {
-          padding: '22px',
-          background: '#fcfbff',
-          maxHeight: 'calc(90vh - 78px)',
-          overflowY: 'auto',
-        },
-      }}
-    >
-      {loading ? (
-        <Group justify="center" py={60}>
-          <Loader color={currentStatusColor} />
-        </Group>
-      ) : !taskDetails ? (
-        <Text c="dimmed">Нет данных по карточке</Text>
-      ) : (
-        <Stack gap="lg">
-          <TaskEditableSection
-            taskDetails={taskDetails}
-            currentStatusColor={currentStatusColor}
-            canEditTask={canEditTask}
-            canEditQuota={canEditQuota}
-            canEditScore={canEditScore}
-            canArchiveTask={canArchiveTask}
-            archiving={archiving}
-            onArchive={handleArchiveTask}
-            canReviewTeam={canReviewTeam}
-            reviewLoading={reviewLoading}
-            onApprove={handleApproveTeam}
-            onReturnToWork={handleReturnToWork}
-            reloadTaskDetails={loadTaskDetails}
-            onTaskChanged={onTaskChanged}
-          />
-          <Divider />
-          {isBacklogView ? (
-            <Stack gap="sm">
-              <Text fw={700} size="lg">
-                Команды по задаче
-              </Text>
-              {taskDetails.teams.length > 0 ? (
-                taskDetails.teams.map((team) => (
-                  <Paper key={team.id} withBorder radius="xl" p="md">
-                    <Group justify="space-between" mb="xs">
-                      <Text fw={700}>Команда #{team.id}</Text>
-                      <Badge variant="light" radius="sm">
-                        {statusLabel[team.status]}
-                      </Badge>
-                    </Group>
-                    {team.participants.length > 0 ? (
-                      <Stack gap="xs">
-                        {team.participants.map((participant) => (
-                          <Paper
-                            key={participant.tab_num}
-                            withBorder
-                            radius="lg"
-                            p="sm"
-                            bg="#faf8ff"
-                          >
-                            <Text size="sm" fw={600}>
-                              {participant.fio}
-                            </Text>
-                          </Paper>
-                        ))}
-                      </Stack>
-                    ) : (
-                      <Text size="sm" c="dimmed">
-                        Нет участников
-                      </Text>
-                    )}
+    <>
+      <Modal
+        opened={opened}
+        onClose={onClose}
+        size={760}
+        centered
+        title={
+          <Group gap="sm">
+            <ThemeIcon variant="light" color={currentStatusColor} radius="xl" size="lg">
+              <IconChecklist size={18} />
+            </ThemeIcon>
+            <Text fw={800} size="lg">
+              Просмотр карточки
+            </Text>
+          </Group>
+        }
+        overlayProps={{
+          backgroundOpacity: 0.55,
+          blur: 3,
+        }}
+        styles={{
+          content: {
+            borderRadius: '22px',
+            overflow: 'hidden',
+            maxHeight: '90vh',
+          },
+          header: {
+            padding: '18px 22px',
+            borderBottom: '1px solid #f1effa',
+            background: 'linear-gradient(180deg,#faf8ff 0%,#ffffff 100%)',
+          },
+          body: {
+            padding: '22px',
+            background: '#fcfbff',
+            maxHeight: 'calc(90vh - 78px)',
+            overflowY: 'auto',
+          },
+        }}
+      >
+        {loading ? (
+          <Group justify="center" py={60}>
+            <Loader color={currentStatusColor} />
+          </Group>
+        ) : !taskDetails ? (
+          <Text c="dimmed">Нет данных по карточке</Text>
+        ) : (
+          <Stack gap="lg">
+            <TaskEditableSection
+              taskDetails={taskDetails}
+              currentStatusColor={currentStatusColor}
+              canEditTask={canEditTask}
+              canEditQuota={canEditQuota}
+              canEditScore={canEditScore}
+              canArchiveTask={canArchiveTask}
+              archiving={archiving}
+              onArchive={handleArchiveTask}
+              canReviewTeam={canReviewTeam}
+              reviewLoading={reviewLoading}
+              onApprove={handleApproveTeam}
+              onReturnToWork={handleReturnToWork}
+              reloadTaskDetails={loadTaskDetails}
+              onTaskChanged={onTaskChanged}
+              onToggleFavorite={handleToggleFavorite}
+              onOpenStats={() => setStatsOpened(true)}
+            />
+            <Divider />
+            {isBacklogView ? (
+              <Stack gap="sm">
+                <Text fw={700} size="lg">
+                  Команды по задаче
+                </Text>
+                {taskDetails.teams.length > 0 ? (
+                  taskDetails.teams.map((team) => (
+                    <Paper key={team.id} withBorder radius="xl" p="md">
+                      <Group justify="space-between" mb="xs">
+                        <Text fw={700}>Команда #{team.id}</Text>
+                        <Badge variant="light" radius="sm">
+                          {statusLabel[team.status]}
+                        </Badge>
+                      </Group>
+                      {team.participants.length > 0 ? (
+                        <Stack gap="xs">
+                          {team.participants.map((participant) => (
+                            <Paper
+                              key={participant.tab_num}
+                              withBorder
+                              radius="lg"
+                              p="sm"
+                              bg="#faf8ff"
+                            >
+                              <Text size="sm" fw={600}>
+                                {participant.fio}
+                              </Text>
+                            </Paper>
+                          ))}
+                        </Stack>
+                      ) : (
+                        <Text size="sm" c="dimmed">
+                          Нет участников
+                        </Text>
+                      )}
+                    </Paper>
+                  ))
+                ) : (
+                  <Paper withBorder radius="xl" p="lg">
+                    <Text size="sm" c="dimmed">
+                      Над задачей пока никто не работает
+                    </Text>
                   </Paper>
-                ))
-              ) : (
-                <Paper withBorder radius="xl" p="lg">
-                  <Text size="sm" c="dimmed">
-                    Над задачей пока никто не работает
-                  </Text>
-                </Paper>
-              )}
-            </Stack>
-          ) : currentTeam ? (
-            <Stack gap="lg">
-              <TaskTeamSection
-                team={currentTeam}
-                statusLabel={statusLabel}
-                currentStatusColor={currentStatusColor}
-                availableUsers={availableUsers}
-                selectedUserTabNum={selectedUserTabNum}
-                addingParticipant={addingParticipant}
-                removingParticipantTabNum={removingParticipantTabNum}
-                canEditTeam={canEditTeam}
-                canRemoveParticipant={canRemoveParticipant}
-                onSelectedUserChange={setSelectedUserTabNum}
-                onAddParticipant={handleAddParticipant}
-                onRemoveParticipant={handleRemoveParticipant}
-                isApprovedTeam={isApprovedTeam}
-              />
-              <TaskCommentsSection
-                currentStatusColor={currentStatusColor}
-                comments={currentTeam.comments}
-                commentText={commentText}
-                commentLoading={commentLoading}
-                deletingCommentId={deletingCommentId}
-                canCommentCurrentTeam={canCommentCurrentTeam}
-                canSubmitComment={canSubmitComment}
-                onCommentTextChange={setCommentText}
-                onAddComment={handleAddComment}
-                canDeleteComment={canDeleteComment}
-                onDeleteComment={handleDeleteComment}
-              />
-            </Stack>
-          ) : (
-            <Paper withBorder radius="xl" p="lg">
-              <Text size="sm" c="dimmed">
-                Команда не найдена
-              </Text>
-            </Paper>
-          )}
-        </Stack>
-      )}
-    </Modal>
+                )}
+              </Stack>
+            ) : currentTeam ? (
+              <Stack gap="lg">
+                <TaskTeamSection
+                  team={currentTeam}
+                  statusLabel={statusLabel}
+                  currentStatusColor={currentStatusColor}
+                  availableUsers={availableUsers}
+                  selectedUserTabNum={selectedUserTabNum}
+                  addingParticipant={addingParticipant}
+                  removingParticipantTabNum={removingParticipantTabNum}
+                  canEditTeam={canEditTeam}
+                  canRemoveParticipant={canRemoveParticipant}
+                  onSelectedUserChange={setSelectedUserTabNum}
+                  onAddParticipant={handleAddParticipant}
+                  onRemoveParticipant={handleRemoveParticipant}
+                  isApprovedTeam={isApprovedTeam}
+                />
+                <TaskCommentsSection
+                  currentStatusColor={currentStatusColor}
+                  comments={currentTeam.comments}
+                  commentText={commentText}
+                  commentLoading={commentLoading}
+                  deletingCommentId={deletingCommentId}
+                  canCommentCurrentTeam={canCommentCurrentTeam}
+                  canSubmitComment={canSubmitComment}
+                  onCommentTextChange={setCommentText}
+                  onAddComment={handleAddComment}
+                  canDeleteComment={canDeleteComment}
+                  onDeleteComment={handleDeleteComment}
+                />
+              </Stack>
+            ) : (
+              <Paper withBorder radius="xl" p="lg">
+                <Text size="sm" c="dimmed">
+                  Команда не найдена
+                </Text>
+              </Paper>
+            )}
+          </Stack>
+        )}
+      </Modal>
+
+      <TaskStatsModal 
+        opened={statsOpened} 
+        taskId={taskId} 
+        onClose={() => setStatsOpened(false)} 
+      />
+    </>
   );
 }

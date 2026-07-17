@@ -20,6 +20,10 @@ interface TaskEditableSectionProps {
   onReturnToWork: () => void;
   reloadTaskDetails: () => Promise<void>;
   onTaskChanged: () => void | Promise<void>;
+  
+  // Новые пропсы
+  onToggleFavorite: () => void;
+  onOpenStats: () => void;
 }
 
 export default function TaskEditableSection({
@@ -37,6 +41,8 @@ export default function TaskEditableSection({
   onReturnToWork,
   reloadTaskDetails,
   onTaskChanged,
+  onToggleFavorite,
+  onOpenStats,
 }: TaskEditableSectionProps) {
   const [isEditingTask, setIsEditingTask] = useState(false);
   const [editName, setEditName] = useState('');
@@ -75,20 +81,11 @@ export default function TaskEditableSection({
     const trimmedDeadline = editDeadline.trim();
 
     if (!trimmedName || !trimmedDescription) {
-      notifications.show({
-        title: 'Ошибка',
-        message: 'Заполните название и описание',
-        color: 'red',
-      });
+      notifications.show({ title: 'Ошибка', message: 'Заполните название и описание', color: 'red' });
       return;
     }
-
     if (!trimmedDeadline) {
-      notifications.show({
-        title: 'Ошибка',
-        message: 'Выберите дедлайн',
-        color: 'red',
-      });
+      notifications.show({ title: 'Ошибка', message: 'Выберите дедлайн', color: 'red' });
       return;
     }
 
@@ -105,19 +102,10 @@ export default function TaskEditableSection({
       setIsEditingTask(false);
       await reloadTaskDetails();
       await onTaskChanged();
-      notifications.show({
-        title: 'Успешно',
-        message: 'Карточка обновлена',
-        color: 'teal',
-        autoClose: 1400,
-      });
+      notifications.show({ title: 'Успешно', message: 'Карточка обновлена', color: 'teal', autoClose: 1400 });
     } catch (error) {
       console.error('Ошибка обновления карточки:', error);
-      notifications.show({
-        title: 'Ошибка',
-        message: error instanceof Error ? error.message : 'Не удалось обновить карточку',
-        color: 'red',
-      });
+      notifications.show({ title: 'Ошибка', message: error instanceof Error ? error.message : 'Не удалось обновить карточку', color: 'red' });
     } finally {
       setTaskSaving(false);
     }
@@ -151,6 +139,12 @@ export default function TaskEditableSection({
         onEditNameChange={setEditName}
         onEditDescriptionChange={setEditDescription}
         onEditScoreChange={setEditScore}
+        
+        isFavorite={taskDetails.is_favorite}
+        favoritesCount={taskDetails.favorites_count}
+        viewsCount={taskDetails.views_count}
+        onToggleFavorite={onToggleFavorite}
+        onOpenStats={onOpenStats}
       />
       <TaskInfoCards
         deadline={taskDetails.deadline_full?.split(' ')[0] || '-'}

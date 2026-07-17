@@ -10,7 +10,16 @@ import {
   Textarea,
   Tooltip,
 } from '@mantine/core';
-import { IconArchive, IconCheck, IconX, IconPencil, IconDeviceFloppy } from '@tabler/icons-react';
+import { 
+  IconArchive, 
+  IconCheck, 
+  IconX, 
+  IconPencil, 
+  IconDeviceFloppy,
+  IconHeart,
+  IconHeartFilled,
+  IconChartBar
+} from '@tabler/icons-react';
 import styles from './TaskDetailsModal.module.css';
 
 interface TaskDetailsHeroProps {
@@ -39,6 +48,13 @@ interface TaskDetailsHeroProps {
   onEditNameChange: (value: string) => void;
   onEditDescriptionChange: (value: string) => void;
   onEditScoreChange: (value: string) => void;
+  
+  // Новые пропсы для статистики и избранного
+  isFavorite: boolean;
+  favoritesCount: number;
+  viewsCount: number;
+  onToggleFavorite: () => void;
+  onOpenStats: () => void;
 }
 
 export default function TaskDetailsHero({
@@ -67,6 +83,11 @@ export default function TaskDetailsHero({
   onEditNameChange,
   onEditDescriptionChange,
   onEditScoreChange,
+  isFavorite,
+  favoritesCount,
+  viewsCount,
+  onToggleFavorite,
+  onOpenStats,
 }: TaskDetailsHeroProps) {
   return (
     <Paper radius="xl" p="lg" className={styles.heroCard}>
@@ -134,9 +155,38 @@ export default function TaskDetailsHero({
               className={styles.scoreInput}
             />
           ) : (
-            <Badge size="lg" radius="md" variant="light" color={currentStatusColor}>
-              {score} баллов
-            </Badge>
+            <Group gap="xs">
+              <Tooltip label={`Просмотры: ${viewsCount}. Нажмите для статистики`} withArrow>
+                <ActionIcon 
+                  size="lg" 
+                  radius="md" 
+                  variant="light" 
+                  color="blue"
+                  onClick={onOpenStats}
+                >
+                  <IconChartBar size={18} />
+                </ActionIcon>
+              </Tooltip>
+
+              <Tooltip label={isFavorite ? "Убрать из избранного" : "Добавить в избранное"} withArrow>
+                <Button
+                  size="xs"
+                  radius="md"
+                  variant={isFavorite ? "filled" : "light"}
+                  color="red"
+                  px="xs"
+                  leftSection={isFavorite ? <IconHeartFilled size={16} /> : <IconHeart size={16} />}
+                  onClick={onToggleFavorite}
+                  style={{ height: 34 }}
+                >
+                  {favoritesCount}
+                </Button>
+              </Tooltip>
+
+              <Badge size="lg" radius="md" variant="light" color={currentStatusColor} style={{ height: 34 }}>
+                {score} баллов
+              </Badge>
+            </Group>
           )}
           <Group gap="xs">
             {isEditingTask ? (

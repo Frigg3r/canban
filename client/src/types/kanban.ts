@@ -53,6 +53,9 @@ export interface KanbanTaskDetails {
   approved_by_name: string | null;
   approved_at: string | null;
   teams: KanbanTeamDetails[];
+  favorites_count: number;
+  views_count: number;
+  is_favorite: boolean;
 }
 
 export interface KanbanAvailableUser {
@@ -77,4 +80,19 @@ export interface KanbanRatingUser {
   role_id: number;
   role_name: string;
   total_score: number;
+}
+
+export interface KanbanTaskViewer {
+  tab_num: number;
+  fio: string;
+  time: string;
+}
+
+export interface KanbanTaskStats {
+  chart: {
+    date_label: string;
+    views: number;
+    viewers: KanbanTaskViewer[];
+  }[];
+  favorites: { tab_num: number; fio: string }[];
 }
