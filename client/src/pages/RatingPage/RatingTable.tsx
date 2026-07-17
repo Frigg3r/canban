@@ -6,11 +6,13 @@ import styles from './RatingPage.module.css';
 interface RatingTableProps {
   rating: KanbanRatingUser[];
   scoreHeader?: string;
+  onUserClick: (user: KanbanRatingUser) => void;
 }
 
-export default function RatingTable({
-  rating,
-  scoreHeader = 'Баллы',
+export default function RatingTable({ 
+  rating, 
+  scoreHeader = 'Баллы', 
+  onUserClick 
 }: RatingTableProps) {
   if (rating.length === 0) {
     return (
@@ -30,18 +32,19 @@ export default function RatingTable({
           <Table.Th className={styles.tableAlignRight}>{scoreHeader}</Table.Th>
         </Table.Tr>
       </Table.Thead>
-
       <Table.Tbody>
         {rating.map((user) => {
           const place = normalizePlace(user.place);
           const theme = getPlaceTheme(place);
           const isTopThree = place <= 3;
-
+          
           return (
             <Table.Tr
               key={user.tab_num}
+              onClick={() => onUserClick(user)}
               style={{
                 background: isTopThree ? theme.rowBackground : undefined,
+                cursor: 'pointer'
               }}
             >
               <Table.Td>
@@ -55,15 +58,12 @@ export default function RatingTable({
                   {place}
                 </span>
               </Table.Td>
-
               <Table.Td>
                 <Text fw={700} c='black'>
                   {user.fio}
                 </Text>
               </Table.Td>
-
               <Table.Td>{user.tab_num}</Table.Td>
-
               <Table.Td className={styles.tableAlignRight}>
                 <Text fw={800} c={isTopThree ? theme.scoreColor : undefined}>
                   {user.total_score}

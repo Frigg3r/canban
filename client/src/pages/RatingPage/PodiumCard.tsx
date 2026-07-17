@@ -12,6 +12,7 @@ interface PodiumCardProps {
   users: KanbanRatingUser[];
   raised?: boolean;
   scoreLabel?: string;
+  onUserClick: (user: KanbanRatingUser) => void;
 }
 
 export default function PodiumCard({
@@ -19,10 +20,11 @@ export default function PodiumCard({
   users,
   raised = false,
   scoreLabel = 'баллов за квартал',
+  onUserClick,
 }: PodiumCardProps) {
   const normalizedPlace = normalizePlace(place);
   const theme = getPlaceTheme(normalizedPlace);
-  const placeImage = `/rating/place-${normalizedPlace}.png`;
+  const placeImage = `${import.meta.env.BASE_URL}rating/place-${normalizedPlace}.png`;
 
   return (
     <Paper
@@ -45,7 +47,6 @@ export default function PodiumCard({
           radius="xl"
           fit="cover"
         />
-
         <Badge
           size="lg"
           radius="sm"
@@ -57,19 +58,26 @@ export default function PodiumCard({
         >
           {getPlaceLabel(normalizedPlace).toUpperCase()}
         </Badge>
-
         <Stack gap="sm" w="100%">
           {users.map((user) => (
-            <Paper key={user.tab_num} radius="lg" p="md" w="100%" className={styles.scoreBox}>
+            <Paper 
+              key={user.tab_num} 
+              radius="lg" 
+              p="md" 
+              w="100%" 
+              className={styles.scoreBox}
+              onClick={() => onUserClick(user)}
+              style={{ cursor: 'pointer', transition: 'transform 0.2s ease' }}
+              onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
+              onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+            >
               <Stack gap={2} align="center">
                 <Text fw={800} size="lg" ta="center" lh={1.25}>
                   {user.fio}
                 </Text>
-
                 <Text fw={900} size="30px" lh={1} c={theme.scoreColor}>
                   {user.total_score}
                 </Text>
-
                 <Text size="xs" c="dimmed">
                   {scoreLabel}
                 </Text>

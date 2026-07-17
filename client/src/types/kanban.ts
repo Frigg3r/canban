@@ -96,3 +96,10 @@ export interface KanbanTaskStats {
   }[];
   favorites: { tab_num: number; fio: string }[];
 }
+
+export interface KanbanRatingTaskDetail {
+  id: number;
+  name: string;
+  score: number;
+  deadline: string;
+}

@@ -8,6 +8,7 @@ import type {
   KanbanTaskDetails,
   KanbanRatingUser,
   KanbanTaskStats,
+  KanbanRatingTaskDetail,
 } from '../types/kanban';
 
 import type {
@@ -224,6 +225,18 @@ class KanbanApi extends BaseApi {
   getTaskStats(taskId: number) {
     const query = new URLSearchParams({ task_id: String(taskId) });
     return this.requestData<KanbanTaskStats>(`/get-task-stats.php?${query.toString()}`);
+  }
+
+  getUserRatingDetails(tabNum: number, year: number, quarter: number, type: 'performers' | 'initiators') {
+    const query = new URLSearchParams({
+      tab_num: String(tabNum),
+      year: String(year),
+      quarter: String(quarter),
+      type
+    });
+    return this.requestData<KanbanRatingTaskDetail[]>(
+      `/get-user-rating-details.php?${query.toString()}`
+    );
   }
 }
 
