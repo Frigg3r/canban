@@ -24,10 +24,10 @@ export default function KanbanActions({
         onClick={onCreateTaskClick}
         styles={{
           root: {
-            background: 'linear-gradient(135deg, #602AF2 0%, #a981ff 100%)',
+            background: 'linear-gradient(135deg, #602AF2 0%, #9f72ff 100%)',
             color: '#ffffff',
             border: 'none',
-            fontWeight: 700,
+            fontWeight: 500,
             paddingInline: '14px',
           },
         }}
@@ -41,10 +41,10 @@ export default function KanbanActions({
         onClick={onCreateUserClick}
         styles={{
           root: {
-            background: 'linear-gradient(135deg, #009573 0%, #22CFA8 100%)',
+            background: 'linear-gradient(135deg, #009573 0%, #21bb97 100%)',
             color: '#ffffff',
             border: 'none',
-            fontWeight: 700,
+            fontWeight: 500,
             paddingInline: '14px',
           },
         }}

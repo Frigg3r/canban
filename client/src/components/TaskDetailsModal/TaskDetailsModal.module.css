@@ -47,3 +47,9 @@
 .teamSelect {
   min-width: 220px;
 }
+
+.breakText {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}

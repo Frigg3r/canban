@@ -20,13 +20,13 @@ interface TaskDetailsHeroProps {
   initiatorName: string | null;
   currentStatusColor: string;
   canArchiveTask: boolean;
+  canEditScore: boolean;
   archiving: boolean;
   onArchive: () => void;
   canReviewTeam: boolean;
   reviewLoading: boolean;
   onApprove: () => void;
   onReturnToWork: () => void;
-
   canEditTask: boolean;
   isEditingTask: boolean;
   editName: string;
@@ -48,13 +48,13 @@ export default function TaskDetailsHero({
   initiatorName,
   currentStatusColor,
   canArchiveTask,
+  canEditScore,
   archiving,
   onArchive,
   canReviewTeam,
   reviewLoading,
   onApprove,
   onReturnToWork,
-
   canEditTask,
   isEditingTask,
   editName,
@@ -92,16 +92,10 @@ export default function TaskDetailsHero({
             </Stack>
           ) : (
             <>
-              <Group gap="xs" align="flex-start" wrap="wrap">
-                <Text
-                  fw={800}
-                  size="xl"
-                  lh={1.2}
-                  style={{ flex: 1, minWidth: 0, overflowWrap: 'anywhere' }}
-                >
+              <Group gap="xs" align="center" wrap="wrap">
+                <Text fw={800} size="xl" lh={1.2} className={styles.breakText}>
                   {title}
                 </Text>
-
                 {canEditTask && (
                   <Tooltip label="Редактировать" withArrow>
                     <ActionIcon
@@ -116,26 +110,24 @@ export default function TaskDetailsHero({
                   </Tooltip>
                 )}
               </Group>
-
-              <Text mt="sm" size="sm" c="dimmed" className={styles.descriptionText}>
+              <Text mt="sm" size="sm" c="black" className={styles.descriptionText}>
                 {description || 'Без описания'}
               </Text>
-
               {initiatorName && (
-                <Text size="sm" c="dimmed" mt={8}>
+                <Text size="sm" c="black" mt={8} fw={800}>
                   Инициатор: {initiatorName}
                 </Text>
               )}
             </>
           )}
         </div>
-
         <Stack gap="sm" align="flex-end">
           {isEditingTask ? (
             <TextInput
               label="Баллы"
               type="number"
               value={editScore}
+              disabled={!canEditScore}
               onChange={(e) => onEditScoreChange(e.currentTarget.value)}
               radius="md"
               size="sm"
@@ -146,7 +138,6 @@ export default function TaskDetailsHero({
               {score} баллов
             </Badge>
           )}
-
           <Group gap="xs">
             {isEditingTask ? (
               <>
@@ -162,7 +153,6 @@ export default function TaskDetailsHero({
                     <IconDeviceFloppy size={18} />
                   </ActionIcon>
                 </Tooltip>
-
                 <Tooltip label="Отмена" withArrow>
                   <ActionIcon
                     size="lg"
@@ -192,7 +182,6 @@ export default function TaskDetailsHero({
                         <IconCheck size={18} />
                       </ActionIcon>
                     </Tooltip>
-
                     <Tooltip label="Отправить на доработку" withArrow>
                       <ActionIcon
                         size="lg"
@@ -207,7 +196,6 @@ export default function TaskDetailsHero({
                     </Tooltip>
                   </>
                 )}
-
                 {canArchiveTask && (
                   <Button
                     size="xs"

@@ -9,10 +9,10 @@ export const theme = createTheme({
     fontFamily,
   },
   fontSizes: {
-    xs: '0.8125rem',
+    xs: '0.85rem',
     sm: '0.9375rem',
-    md: '1.0625rem',
-    lg: '1.1875rem',
-    xl: '1.3125rem',
+    md: '1.2rem',
+    lg: '1.4rem',
+    xl: '1.6rem',
   },
 });

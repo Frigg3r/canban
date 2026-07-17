@@ -172,7 +172,7 @@ export default function CreateTaskModal({
 
               <Select
                 label="Инициатор"
-                placeholder="Если не выбран — будет текущий пользователь"
+                placeholder="По умолчанию - Вы"
                 data={initiators.map((user) => ({
                   value: String(user.tab_num),
                   label: user.fio,

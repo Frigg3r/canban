@@ -18,7 +18,6 @@ import type {
   KanbanTaskDetails,
   KanbanAvailableUser,
 } from '../../types/kanban';
-
 import TaskCommentsSection from './TaskCommentsSection';
 import TaskTeamSection from './TaskTeamSection';
 import TaskEditableSection from './TaskEditableSection';
@@ -64,12 +63,10 @@ export default function TaskDetailsModal({
   const [selectedUserTabNum, setSelectedUserTabNum] = useState<string | null>(null);
   const [archiving, setArchiving] = useState(false);
   const [reviewLoading, setReviewLoading] = useState(false);
-
   const { currentUser } = useAppAuth();
 
   const loadTaskDetails = async () => {
     if (taskId == null) return;
-
     try {
       setLoading(true);
       const data = await kanbanApi.getTaskDetails(taskId, teamId);
@@ -90,7 +87,6 @@ export default function TaskDetailsModal({
     if (taskId == null || teamId == null) {
       return;
     }
-
     try {
       const data = await kanbanApi.getTeamCandidates(taskId);
       setAvailableUsers(data);
@@ -103,14 +99,11 @@ export default function TaskDetailsModal({
     if (!opened || taskId == null) {
       return;
     }
-
     loadTaskDetails();
-
     if (teamId == null) {
       setAvailableUsers([]);
       return;
     }
-
     loadAvailableUsers();
   }, [opened, taskId, teamId]);
 
@@ -124,7 +117,6 @@ export default function TaskDetailsModal({
   }, [opened]);
 
   const isBacklogView = teamId == null;
-
   const currentTeam =
     !taskDetails || isBacklogView
       ? null
@@ -134,7 +126,6 @@ export default function TaskDetailsModal({
     isBacklogView
       ? 'backlog'
       : currentTeam?.status ?? taskDetails?.board_status ?? 'backlog';
-
   const currentStatusKey = openedColumnStatus;
   const currentStatusColor = statusColor[currentStatusKey] || 'gray';
   const trimmedComment = commentText.trim();
@@ -142,11 +133,10 @@ export default function TaskDetailsModal({
   const canArchiveTask = getCanArchiveTask(currentUser, currentStatusKey);
   const canEditTask = getCanEditTask(currentUser);
   const canEditQuota = getCanEditQuota(taskDetails?.board_status ?? 'backlog');
-
+  const canEditScore = (taskDetails?.board_status ?? 'backlog') !== 'done'; // to do: нужно сделать,как везде,было лень и время поздно)))
   const canCommentCurrentTeam = getCanCommentCurrentTeam(currentTeam, currentUser);
   const canEditTeam = getCanEditTeam(isBacklogView, currentTeam, canCommentCurrentTeam);
   const canReviewTeam = getCanReviewTeam(currentUser, currentTeam);
-
   const isApprovedTeam =
     Boolean(currentTeam && Number(taskDetails?.approved_team_id) === Number(currentTeam.id));
 
@@ -189,7 +179,6 @@ export default function TaskDetailsModal({
       before?.();
       await action();
       await afterSuccess?.();
-
       notifications.show({
         title: 'Успешно',
         message: successMessage,
@@ -198,7 +187,6 @@ export default function TaskDetailsModal({
       });
     } catch (error) {
       console.error(error);
-
       notifications.show({
         title: 'Ошибка',
         message: error instanceof Error ? error.message : errorMessage,
@@ -211,7 +199,6 @@ export default function TaskDetailsModal({
 
   const handleAddComment = async () => {
     if (!currentTeam || !trimmedComment) return;
-
     await runTaskAction({
       before: () => setCommentLoading(true),
       action: async () => {
@@ -220,10 +207,8 @@ export default function TaskDetailsModal({
           text: trimmedComment,
           author_tab_num: currentUser.tab_num,
         });
-
         setTaskDetails((prev) => {
           if (!prev) return prev;
-
           return {
             ...prev,
             teams: prev.teams.map((team) =>
@@ -245,7 +230,6 @@ export default function TaskDetailsModal({
 
   const handleDeleteComment = async (comment: KanbanComment) => {
     if (!currentTeam) return;
-
     if (!canDeleteComment(comment)) {
       notifications.show({
         title: 'Ошибка',
@@ -254,7 +238,6 @@ export default function TaskDetailsModal({
       });
       return;
     }
-
     await runTaskAction({
       before: () => setDeletingCommentId(comment.id),
       action: async () => {
@@ -263,7 +246,6 @@ export default function TaskDetailsModal({
       afterSuccess: () => {
         setTaskDetails((prev) => {
           if (!prev) return prev;
-
           return {
             ...prev,
             teams: prev.teams.map((team) =>
@@ -285,7 +267,6 @@ export default function TaskDetailsModal({
 
   const handleAddParticipant = async () => {
     if (!currentTeam || !selectedUserTabNum || !taskDetails) return;
-
     const teamIdValue = Number(currentTeam.id);
     const selectedTabNum = Number(selectedUserTabNum);
 
@@ -301,7 +282,6 @@ export default function TaskDetailsModal({
     const addedUser = availableUsers.find(
       (user) => Number(user.tab_num) === selectedTabNum
     );
-
     if (!addedUser) return;
 
     await runTaskAction({
@@ -315,7 +295,6 @@ export default function TaskDetailsModal({
       afterSuccess: async () => {
         setTaskDetails((prev) => {
           if (!prev) return prev;
-
           return {
             ...prev,
             teams: prev.teams.map((team) =>
@@ -334,13 +313,10 @@ export default function TaskDetailsModal({
             ),
           };
         });
-
         setAvailableUsers((prev) =>
           prev.filter((user) => Number(user.tab_num) !== selectedTabNum)
         );
-
         setSelectedUserTabNum(null);
-
         await onTaskChanged();
       },
       successMessage: 'Сотрудник добавлен в команду',
@@ -351,7 +327,6 @@ export default function TaskDetailsModal({
 
   const handleApproveTeam = async () => {
     if (!currentTeam || !canReviewTeam) return;
-
     await runTaskAction({
       before: () => setReviewLoading(true),
       action: async () => {
@@ -363,7 +338,6 @@ export default function TaskDetailsModal({
       afterSuccess: async () => {
         setTaskDetails((prev) => {
           if (!prev) return prev;
-
           return {
             ...prev,
             board_status: 'done',
@@ -374,7 +348,6 @@ export default function TaskDetailsModal({
             ),
           };
         });
-
         await onTaskChanged();
         onClose();
       },
@@ -387,7 +360,6 @@ export default function TaskDetailsModal({
 
   const handleReturnToWork = async () => {
     if (!currentTeam || !canReviewTeam) return;
-
     await runTaskAction({
       before: () => setReviewLoading(true),
       action: async () => {
@@ -400,7 +372,6 @@ export default function TaskDetailsModal({
       afterSuccess: async () => {
         setTaskDetails((prev) => {
           if (!prev) return prev;
-
           return {
             ...prev,
             board_status: 'inProgress',
@@ -411,7 +382,6 @@ export default function TaskDetailsModal({
             ),
           };
         });
-
         await onTaskChanged();
         onClose();
       },
@@ -424,7 +394,6 @@ export default function TaskDetailsModal({
 
   const handleRemoveParticipant = async (tabNum: number) => {
     if (!currentTeam || !canRemoveParticipant(tabNum)) return;
-
     const teamIdValue = Number(currentTeam.id);
     const nextParticipantsCount = Math.max(currentTeam.participants.length - 1, 0);
 
@@ -439,7 +408,6 @@ export default function TaskDetailsModal({
       afterSuccess: async () => {
         setTaskDetails((prev) => {
           if (!prev) return prev;
-
           return {
             ...prev,
             teams: prev.teams.map((team) =>
@@ -454,14 +422,11 @@ export default function TaskDetailsModal({
             ),
           };
         });
-
         await onTaskChanged();
-
         if (nextParticipantsCount === 0) {
           onClose();
           return;
         }
-
         await loadAvailableUsers();
       },
       successMessage: 'Сотрудник удалён из команды',
@@ -472,7 +437,6 @@ export default function TaskDetailsModal({
 
   const handleArchiveTask = async () => {
     if (!taskDetails) return;
-
     await runTaskAction({
       before: () => setArchiving(true),
       action: async () => {
@@ -517,7 +481,7 @@ export default function TaskDetailsModal({
         header: {
           padding: '18px 22px',
           borderBottom: '1px solid #f1effa',
-          background: 'linear-gradient(180deg, #faf8ff 0%, #ffffff 100%)',
+          background: 'linear-gradient(180deg,#faf8ff 0%,#ffffff 100%)',
         },
         body: {
           padding: '22px',
@@ -540,6 +504,7 @@ export default function TaskDetailsModal({
             currentStatusColor={currentStatusColor}
             canEditTask={canEditTask}
             canEditQuota={canEditQuota}
+            canEditScore={canEditScore}
             canArchiveTask={canArchiveTask}
             archiving={archiving}
             onArchive={handleArchiveTask}
@@ -550,15 +515,12 @@ export default function TaskDetailsModal({
             reloadTaskDetails={loadTaskDetails}
             onTaskChanged={onTaskChanged}
           />
-
           <Divider />
-
           {isBacklogView ? (
             <Stack gap="sm">
               <Text fw={700} size="lg">
                 Команды по задаче
               </Text>
-
               {taskDetails.teams.length > 0 ? (
                 taskDetails.teams.map((team) => (
                   <Paper key={team.id} withBorder radius="xl" p="md">
@@ -568,7 +530,6 @@ export default function TaskDetailsModal({
                         {statusLabel[team.status]}
                       </Badge>
                     </Group>
-
                     {team.participants.length > 0 ? (
                       <Stack gap="xs">
                         {team.participants.map((participant) => (
@@ -617,7 +578,6 @@ export default function TaskDetailsModal({
                 onRemoveParticipant={handleRemoveParticipant}
                 isApprovedTeam={isApprovedTeam}
               />
-
               <TaskCommentsSection
                 currentStatusColor={currentStatusColor}
                 comments={currentTeam.comments}

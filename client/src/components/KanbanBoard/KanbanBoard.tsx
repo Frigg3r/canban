@@ -181,6 +181,29 @@ export default function KanbanBoard({
       }
 
       if (draggedTask.board_status === 'inProgress' && targetStatus === 'review') {
+        if (!isManager) {
+          const taskDetails = await kanbanApi.getTaskDetails(
+            draggedTask.id,
+            draggedTask.team_id
+          );
+
+          const currentTeam =
+            taskDetails.teams.find(
+              (team) => Number(team.id) === Number(draggedTask.team_id)
+            ) ?? null;
+
+          const isParticipant =
+            currentTeam?.participants.some(
+              (participant) =>
+                Number(participant.tab_num) === Number(currentUser.tab_num)
+            ) ?? false;
+
+          if (!isParticipant) {
+            showError('Отправить на проверку может только участник своей команды');
+            return;
+          }
+        }
+
         await runDropAction(
           () =>
             kanbanApi.changeTeamStatus({

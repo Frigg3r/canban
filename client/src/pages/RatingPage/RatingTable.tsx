@@ -57,7 +57,7 @@ export default function RatingTable({
               </Table.Td>
 
               <Table.Td>
-                <Text fw={700} c={isTopThree ? theme.rowPlaceText : undefined}>
+                <Text fw={700} c='black'>
                   {user.fio}
                 </Text>
               </Table.Td>

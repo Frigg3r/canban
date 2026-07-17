@@ -2,26 +2,22 @@ import { useEffect, useState } from 'react';
 import { notifications } from '@mantine/notifications';
 import { kanbanApi } from '../../api/kanban';
 import type { KanbanTaskDetails } from '../../types/kanban';
-
 import TaskDetailsHero from './TaskDetailsHero';
 import TaskInfoCards from './TaskInfoCards';
 
 interface TaskEditableSectionProps {
   taskDetails: KanbanTaskDetails;
   currentStatusColor: string;
-
   canEditTask: boolean;
   canEditQuota: boolean;
-
+  canEditScore: boolean;
   canArchiveTask: boolean;
   archiving: boolean;
   onArchive: () => void;
-
   canReviewTeam: boolean;
   reviewLoading: boolean;
   onApprove: () => void;
   onReturnToWork: () => void;
-
   reloadTaskDetails: () => Promise<void>;
   onTaskChanged: () => void | Promise<void>;
 }
@@ -31,6 +27,7 @@ export default function TaskEditableSection({
   currentStatusColor,
   canEditTask,
   canEditQuota,
+  canEditScore,
   canArchiveTask,
   archiving,
   onArchive,
@@ -97,20 +94,17 @@ export default function TaskEditableSection({
 
     try {
       setTaskSaving(true);
-
       await kanbanApi.updateTask({
         task_id: Number(taskDetails.id),
         name: trimmedName,
         description: trimmedDescription,
-        score: Number(editScore),
+        score: canEditScore ? Number(editScore) : Number(taskDetails.score),
         quota: canEditQuota ? Number(editQuota) : Number(taskDetails.quota),
         deadline: trimmedDeadline,
       });
-
       setIsEditingTask(false);
       await reloadTaskDetails();
       await onTaskChanged();
-
       notifications.show({
         title: 'Успешно',
         message: 'Карточка обновлена',
@@ -119,7 +113,6 @@ export default function TaskEditableSection({
       });
     } catch (error) {
       console.error('Ошибка обновления карточки:', error);
-
       notifications.show({
         title: 'Ошибка',
         message: error instanceof Error ? error.message : 'Не удалось обновить карточку',
@@ -139,6 +132,7 @@ export default function TaskEditableSection({
         initiatorName={taskDetails.initiator_name}
         currentStatusColor={currentStatusColor}
         canArchiveTask={canArchiveTask}
+        canEditScore={canEditScore}
         archiving={archiving}
         onArchive={onArchive}
         canReviewTeam={canReviewTeam}
@@ -158,7 +152,6 @@ export default function TaskEditableSection({
         onEditDescriptionChange={setEditDescription}
         onEditScoreChange={setEditScore}
       />
-
       <TaskInfoCards
         deadline={taskDetails.deadline_full?.split(' ')[0] || '-'}
         quota={taskDetails.quota}
