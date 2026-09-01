@@ -82,3 +82,16 @@ export function getCanDeleteComment(
 ) {
   return Number(comment.author_tab_num) === Number(currentUser.tab_num);
 }
+
+export function getCanViewTaskStats(
+  currentUser: CurrentUserLike,
+  initiatorTabNum: number | null
+) {
+  return (
+    getIsManager(currentUser) ||
+    (
+      initiatorTabNum != null &&
+      Number(initiatorTabNum) === Number(currentUser.tab_num)
+    )
+  );
+}

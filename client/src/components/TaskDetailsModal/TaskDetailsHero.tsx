@@ -10,11 +10,11 @@ import {
   Textarea,
   Tooltip,
 } from '@mantine/core';
-import { 
-  IconArchive, 
-  IconCheck, 
-  IconX, 
-  IconPencil, 
+import {
+  IconArchive,
+  IconCheck,
+  IconX,
+  IconPencil,
   IconDeviceFloppy,
   IconHeart,
   IconHeartFilled,
@@ -30,6 +30,7 @@ interface TaskDetailsHeroProps {
   currentStatusColor: string;
   canArchiveTask: boolean;
   canEditScore: boolean;
+  canViewTaskStats: boolean;
   archiving: boolean;
   onArchive: () => void;
   canReviewTeam: boolean;
@@ -48,7 +49,7 @@ interface TaskDetailsHeroProps {
   onEditNameChange: (value: string) => void;
   onEditDescriptionChange: (value: string) => void;
   onEditScoreChange: (value: string) => void;
-  
+
   // Новые пропсы для статистики и избранного
   isFavorite: boolean;
   favoritesCount: number;
@@ -65,6 +66,7 @@ export default function TaskDetailsHero({
   currentStatusColor,
   canArchiveTask,
   canEditScore,
+  canViewTaskStats,
   archiving,
   onArchive,
   canReviewTeam,
@@ -156,17 +158,22 @@ export default function TaskDetailsHero({
             />
           ) : (
             <Group gap="xs">
-              <Tooltip label={`Просмотры: ${viewsCount}. Нажмите для статистики`} withArrow>
-                <ActionIcon 
-                  size="lg" 
-                  radius="md" 
-                  variant="light" 
-                  color="blue"
-                  onClick={onOpenStats}
+              {canViewTaskStats && (
+                <Tooltip
+                  label={`Просмотры: ${viewsCount}. Нажмите для статистики`}
+                  withArrow
                 >
-                  <IconChartBar size={18} />
-                </ActionIcon>
-              </Tooltip>
+                  <ActionIcon
+                    size="lg"
+                    radius="md"
+                    variant="light"
+                    color="blue"
+                    onClick={onOpenStats}
+                  >
+                    <IconChartBar size={18} />
+                  </ActionIcon>
+                </Tooltip>
+              )}
 
               <Tooltip label={isFavorite ? "Убрать из избранного" : "Добавить в избранное"} withArrow>
                 <Button

@@ -12,6 +12,7 @@ interface TaskEditableSectionProps {
   canEditQuota: boolean;
   canEditScore: boolean;
   canArchiveTask: boolean;
+  canViewTaskStats: boolean;
   archiving: boolean;
   onArchive: () => void;
   canReviewTeam: boolean;
@@ -36,6 +37,7 @@ export default function TaskEditableSection({
   archiving,
   onArchive,
   canReviewTeam,
+  canViewTaskStats,
   reviewLoading,
   onApprove,
   onReturnToWork,
@@ -121,6 +123,7 @@ export default function TaskEditableSection({
         currentStatusColor={currentStatusColor}
         canArchiveTask={canArchiveTask}
         canEditScore={canEditScore}
+        canViewTaskStats={canViewTaskStats}
         archiving={archiving}
         onArchive={onArchive}
         canReviewTeam={canReviewTeam}

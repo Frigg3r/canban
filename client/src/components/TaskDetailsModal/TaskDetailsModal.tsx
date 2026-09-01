@@ -33,6 +33,7 @@ import {
   getCanSubmitComment,
   getCanReviewTeam,
   getCanEditQuota,
+  getCanViewTaskStats,
 } from './taskDetails.permissions';
 import { useAppAuth } from '../../app-auth';
 
@@ -64,10 +65,10 @@ export default function TaskDetailsModal({
   const [selectedUserTabNum, setSelectedUserTabNum] = useState<string | null>(null);
   const [archiving, setArchiving] = useState(false);
   const [reviewLoading, setReviewLoading] = useState(false);
-  
+
   // Состояние для модалки статистики
   const [statsOpened, setStatsOpened] = useState(false);
-  
+
   const { currentUser } = useAppAuth();
 
   const loadTaskDetails = async () => {
@@ -101,10 +102,10 @@ export default function TaskDetailsModal({
 
   useEffect(() => {
     if (!opened || taskId == null) return;
-    
+
     // Логируем просмотр при открытии
     kanbanApi.logView(taskId, currentUser.tab_num).catch(console.error);
-    
+
     loadTaskDetails();
     if (teamId == null) {
       setAvailableUsers([]);
@@ -160,6 +161,10 @@ export default function TaskDetailsModal({
   const canCommentCurrentTeam = getCanCommentCurrentTeam(currentTeam, currentUser);
   const canEditTeam = getCanEditTeam(isBacklogView, currentTeam, canCommentCurrentTeam);
   const canReviewTeam = getCanReviewTeam(currentUser, currentTeam);
+  const canViewTaskStats = getCanViewTaskStats(
+    currentUser,
+    taskDetails?.initiator_tab_num ?? null
+  );
   const isApprovedTeam =
     Boolean(currentTeam && Number(taskDetails?.approved_team_id) === Number(currentTeam.id));
 
@@ -274,9 +279,9 @@ export default function TaskDetailsModal({
             teams: prev.teams.map((team) =>
               team.id === currentTeam.id
                 ? {
-                    ...team,
-                    comments: team.comments.filter((item) => item.id !== comment.id),
-                  }
+                  ...team,
+                  comments: team.comments.filter((item) => item.id !== comment.id),
+                }
                 : team
             ),
           };
@@ -323,15 +328,15 @@ export default function TaskDetailsModal({
             teams: prev.teams.map((team) =>
               Number(team.id) === teamIdValue
                 ? {
-                    ...team,
-                    participants: [
-                      ...team.participants,
-                      {
-                        tab_num: addedUser.tab_num,
-                        fio: addedUser.fio,
-                      },
-                    ],
-                  }
+                  ...team,
+                  participants: [
+                    ...team.participants,
+                    {
+                      tab_num: addedUser.tab_num,
+                      fio: addedUser.fio,
+                    },
+                  ],
+                }
                 : team
             ),
           };
@@ -436,11 +441,11 @@ export default function TaskDetailsModal({
             teams: prev.teams.map((team) =>
               Number(team.id) === teamIdValue
                 ? {
-                    ...team,
-                    participants: team.participants.filter(
-                      (participant) => Number(participant.tab_num) !== Number(tabNum)
-                    ),
-                  }
+                  ...team,
+                  participants: team.participants.filter(
+                    (participant) => Number(participant.tab_num) !== Number(tabNum)
+                  ),
+                }
                 : team
             ),
           };
@@ -535,6 +540,7 @@ export default function TaskDetailsModal({
               canReviewTeam={canReviewTeam}
               reviewLoading={reviewLoading}
               onApprove={handleApproveTeam}
+              canViewTaskStats={canViewTaskStats}
               onReturnToWork={handleReturnToWork}
               reloadTaskDetails={loadTaskDetails}
               onTaskChanged={onTaskChanged}
@@ -629,10 +635,10 @@ export default function TaskDetailsModal({
         )}
       </Modal>
 
-      <TaskStatsModal 
-        opened={statsOpened} 
-        taskId={taskId} 
-        onClose={() => setStatsOpened(false)} 
+      <TaskStatsModal
+        opened={statsOpened}
+        taskId={taskId}
+        onClose={() => setStatsOpened(false)}
       />
     </>
   );
