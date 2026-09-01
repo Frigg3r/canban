@@ -40,7 +40,11 @@ if ($type === 'performers') {
             t.id,
             t.name,
             csa.score,
-            to_char(t.deadline, 'DD.MM.YYYY') as deadline
+            to_char(t.deadline, 'DD.MM.YYYY') as deadline,
+            t.deadline as sort_date,
+            NULL as comment,
+            false as is_donation,
+            NULL as donation_user_name
         FROM canban.canban_score_accrual csa
         JOIN canban.canban_team ct ON ct.id = csa.team_id
         JOIN canban.canban_task t ON t.id = ct.task_id
@@ -48,7 +52,46 @@ if ($type === 'performers') {
         WHERE csa.tab_num = $tabNum
           AND t.deadline >= p.date_from
           AND t.deadline < p.date_to
-        ORDER BY t.deadline DESC
+
+        UNION ALL
+
+        SELECT
+            t.id,
+            t.name,
+            d.score,
+            to_char(d.created_at, 'DD.MM.YYYY') as deadline,
+            d.created_at as sort_date,
+            d.comment,
+            true as is_donation,
+            u.fio as donation_user_name
+        FROM canban.canban_donation d
+        JOIN canban.canban_task t ON t.id = d.task_id
+        JOIN canban.canban_user u ON u.tab_num = d.from_tab_num
+        CROSS JOIN period p
+        WHERE d.to_tab_num = $tabNum
+          AND d.created_at >= p.date_from
+          AND d.created_at < p.date_to
+
+        UNION ALL
+
+        SELECT
+            t.id,
+            t.name,
+            -d.score as score,
+            to_char(d.created_at, 'DD.MM.YYYY') as deadline,
+            d.created_at as sort_date,
+            d.comment,
+            true as is_donation,
+            u.fio as donation_user_name
+        FROM canban.canban_donation d
+        JOIN canban.canban_task t ON t.id = d.task_id
+        JOIN canban.canban_user u ON u.tab_num = d.to_tab_num
+        CROSS JOIN period p
+        WHERE d.from_tab_num = $tabNum
+          AND d.created_at >= p.date_from
+          AND d.created_at < p.date_to
+
+        ORDER BY sort_date DESC
     ";
     $data = $pg_db->Query($query, true) ?: [];
 } else {
@@ -62,7 +105,10 @@ if ($type === 'performers') {
             t.id,
             t.name,
             isa.score,
-            to_char(isa.deadline_at, 'DD.MM.YYYY') as deadline
+            to_char(isa.deadline_at, 'DD.MM.YYYY') as deadline,
+            NULL as comment,
+            false as is_donation,
+            NULL as donation_user_name
         FROM canban.canban_initiator_score_accrual isa
         JOIN canban.canban_task t ON t.id = isa.task_id
         CROSS JOIN period p
@@ -73,6 +119,11 @@ if ($type === 'performers') {
     ";
     $data = $pg_db->Query($query, true) ?: [];
 }
+
+$data = array_map(function($row) {
+    $row['is_donation'] = $row['is_donation'] === 't' || $row['is_donation'] === true;
+    return $row;
+}, $data);
 
 $pg_db->Close();
 

@@ -18,7 +18,7 @@ import {
   Modal,
   ScrollArea,
 } from '@mantine/core';
-import { IconTrophy, IconListCheck, IconTargetArrow } from '@tabler/icons-react';
+import { IconTrophy, IconListCheck, IconTargetArrow, IconGift } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { kanbanApi } from '../../api/kanban';
 import type { KanbanRatingUser, KanbanRatingTaskDetail } from '../../types/kanban';
@@ -42,7 +42,7 @@ export default function RatingPage({ onBackClick }: RatingPageProps) {
   const [loading, setLoading] = useState(true);
   const [quarter, setQuarter] = useState(getCurrentQuarter());
   const [ratingType, setRatingType] = useState<RatingType>('performers');
-  
+
   // Состояния для модалки с детализацией
   const [selectedUser, setSelectedUser] = useState<KanbanRatingUser | null>(null);
   const [userTasks, setUserTasks] = useState<KanbanRatingTaskDetail[]>([]);
@@ -237,10 +237,10 @@ export default function RatingPage({ onBackClick }: RatingPageProps) {
               {maxScoreLabel}
             </Text>
             <Text fw={900} size="30px" lh={1.1}>
-              {firstPlace?.total_score ?? 0}
+              {firstPlace ? Number(firstPlace.total_score) : 0}
             </Text>
           </Paper>
-          
+
           <Paper radius="xl" p="lg" withBorder className={styles.statCard}>
             <Text c="dimmed" size="sm">
               Текущий период
@@ -260,7 +260,7 @@ export default function RatingPage({ onBackClick }: RatingPageProps) {
               {quarter} квартал {currentYear}
             </Badge>
           </Group>
-          
+
           <RatingTable
             rating={rating}
             scoreHeader={tableScoreHeader}
@@ -298,7 +298,7 @@ export default function RatingPage({ onBackClick }: RatingPageProps) {
                 <Text size="sm" c="dimmed">Табельный: {selectedUser.tab_num}</Text>
               </div>
               <Badge size="xl" radius="md" variant="light" color="violet">
-                {selectedUser.total_score} {tableScoreHeader.toLowerCase()}
+                {Number(selectedUser.total_score)} {tableScoreHeader.toLowerCase()}
               </Badge>
             </Group>
 
@@ -307,24 +307,40 @@ export default function RatingPage({ onBackClick }: RatingPageProps) {
             ) : userTasks.length > 0 ? (
               <ScrollArea mah={400} offsetScrollbars type="hover">
                 <Stack gap="sm" pr="xs">
-                  {userTasks.map((task) => (
-                    <Paper key={task.id} radius="md" p="md" bg="#ffffff" withBorder style={{ borderColor: '#eef2f5' }}>
+                  {userTasks.map((task, idx) => (
+                    <Paper key={`${task.id}-${idx}`} radius="md" p="md" bg="#ffffff" withBorder style={{ borderColor: task.is_donation ? '#eebefa' : '#eef2f5' }}>
                       <Group justify="space-between" wrap="nowrap" align="flex-start">
                         <Stack gap={4} style={{ flex: 1, minWidth: 0 }}>
-                          <Text size="sm" fw={700} c="dark.8" style={{ wordBreak: 'break-word' }}>
-                            {task.name}
-                          </Text>
-                          <Text size="xs" c="dimmed">
-                            {ratingType === 'performers' ? 'Дедлайн:' : 'Закрыта:'} {task.deadline}
+                          <Group gap="xs">
+                            {task.is_donation && (
+                              <ThemeIcon size="sm" radius="xl" color="violet" variant="light">
+                                <IconGift size={12} />
+                              </ThemeIcon>
+                            )}
+                            <Text size="sm" fw={700} c="dark.8" style={{ wordBreak: 'break-word' }}>
+                              {task.name}
+                            </Text>
+                          </Group>
+
+                          {task.is_donation && task.comment && (
+                            <Text size="sm" fs="italic" c="dimmed" pl="md" style={{ borderLeft: '2px solid var(--mantine-color-violet-3)' }}>
+                              «{task.comment}»
+                            </Text>
+                          )}
+
+                          <Text size="xs" c="dimmed" mt={2}>
+                            {task.is_donation
+                              ? (task.score > 0 ? `Получен донат от: ${task.donation_user_name}` : `Отправлен донат для: ${task.donation_user_name}`)
+                              : (ratingType === 'performers' ? 'Дедлайн:' : 'Закрыта:')} {task.deadline}
                           </Text>
                         </Stack>
-                        <Badge 
-                          color={ratingType === 'performers' ? 'blue' : 'teal'} 
-                          variant="light" 
+                        <Badge
+                          color={task.is_donation ? (task.score > 0 ? 'violet' : 'red') : (ratingType === 'performers' ? 'blue' : 'teal')}
+                          variant="light"
                           radius="sm"
-                          leftSection={<IconTargetArrow size={12} />}
+                          leftSection={task.is_donation ? <IconGift size={12} /> : <IconTargetArrow size={12} />}
                         >
-                          +{task.score}
+                          {task.score > 0 ? `+${task.score}` : task.score}
                         </Badge>
                       </Group>
                     </Paper>

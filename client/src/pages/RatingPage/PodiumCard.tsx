@@ -60,11 +60,11 @@ export default function PodiumCard({
         </Badge>
         <Stack gap="sm" w="100%">
           {users.map((user) => (
-            <Paper 
-              key={user.tab_num} 
-              radius="lg" 
-              p="md" 
-              w="100%" 
+            <Paper
+              key={user.tab_num}
+              radius="lg"
+              p="md"
+              w="100%"
               className={styles.scoreBox}
               onClick={() => onUserClick(user)}
               style={{ cursor: 'pointer', transition: 'transform 0.2s ease' }}
@@ -76,7 +76,7 @@ export default function PodiumCard({
                   {user.fio}
                 </Text>
                 <Text fw={900} size="30px" lh={1} c={theme.scoreColor}>
-                  {user.total_score}
+                  {Number(user.total_score)}
                 </Text>
                 <Text size="xs" c="dimmed">
                   {scoreLabel}

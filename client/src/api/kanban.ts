@@ -9,6 +9,7 @@ import type {
   KanbanRatingUser,
   KanbanTaskStats,
   KanbanRatingTaskDetail,
+  KanbanDonation,
 } from '../types/kanban';
 
 import type {
@@ -237,6 +238,27 @@ class KanbanApi extends BaseApi {
     return this.requestData<KanbanRatingTaskDetail[]>(
       `/get-user-rating-details.php?${query.toString()}`
     );
+  }
+
+  getUsers() {
+    return this.requestData<KanbanAvailableUser[]>('/get-users.php');
+  }
+
+  donateScore(fromTabNum: number, toTabNum: number, taskId: number, score: number, comment: string) {
+    return this.requestData<null>('/donate-score.php', {
+      method: 'POST',
+      body: JSON.stringify({
+        from_tab_num: fromTabNum,
+        to_tab_num: toTabNum,
+        task_id: taskId,
+        score,
+        comment
+      }),
+    });
+  }
+
+  getDonationsHistory() {
+    return this.requestData<KanbanDonation[]>('/get-donations-history.php');
   }
 }
 

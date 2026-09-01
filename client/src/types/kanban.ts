@@ -102,4 +102,17 @@ export interface KanbanRatingTaskDetail {
   name: string;
   score: number;
   deadline: string;
+  comment?: string | null; 
+  is_donation?: boolean;  
+  donation_user_name?: string | null;
+}
+
+export interface KanbanDonation {
+  id: number;
+  score: number;
+  comment: string | null;
+  created_at: string;
+  from_user: string;
+  to_user: string;
+  task_name: string;
 }

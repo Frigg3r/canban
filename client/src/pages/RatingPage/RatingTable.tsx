@@ -9,10 +9,10 @@ interface RatingTableProps {
   onUserClick: (user: KanbanRatingUser) => void;
 }
 
-export default function RatingTable({ 
-  rating, 
-  scoreHeader = 'Баллы', 
-  onUserClick 
+export default function RatingTable({
+  rating,
+  scoreHeader = 'Баллы',
+  onUserClick
 }: RatingTableProps) {
   if (rating.length === 0) {
     return (
@@ -37,7 +37,7 @@ export default function RatingTable({
           const place = normalizePlace(user.place);
           const theme = getPlaceTheme(place);
           const isTopThree = place <= 3;
-          
+
           return (
             <Table.Tr
               key={user.tab_num}
@@ -66,7 +66,7 @@ export default function RatingTable({
               <Table.Td>{user.tab_num}</Table.Td>
               <Table.Td className={styles.tableAlignRight}>
                 <Text fw={800} c={isTopThree ? theme.scoreColor : undefined}>
-                  {user.total_score}
+                  {Number(user.total_score)}
                 </Text>
               </Table.Td>
             </Table.Tr>

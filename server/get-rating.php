@@ -52,7 +52,9 @@ $query = "
                     when t.id is not null then csa.score
                     else 0
                 end
-            ), 0) as total_score
+            ), 0) 
+            + coalesce((select sum(d.score) from canban.canban_donation d where d.to_tab_num = cu.tab_num and d.created_at >= p.date_from and d.created_at < p.date_to), 0)
+            - coalesce((select sum(d.score) from canban.canban_donation d where d.from_tab_num = cu.tab_num and d.created_at >= p.date_from and d.created_at < p.date_to), 0) as total_score
         from canban.canban_user cu
         inner join canban.canban_role cr
             on cr.id = cu.role_id
@@ -70,7 +72,9 @@ $query = "
             cu.fio,
             cu.email,
             cr.id,
-            cr.name
+            cr.name,
+            p.date_from,
+            p.date_to
     ),
     positive_ranked as (
         select

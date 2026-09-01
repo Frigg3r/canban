@@ -12,8 +12,8 @@ import KanbanColumn from '../KanbanColumn/KanbanColumn';
 import TaskCard from '../TaskCard/TaskCard';
 import CreateTaskModal from '../CreateTaskModal/CreateTaskModal';
 import TaskDetailsModal from '../TaskDetailsModal/TaskDetailsModal';
-
 import CreateUserModal from '../CreateUserModal/CreateUserModal';
+import DonateModal from '../DonateModal/DonateModal'; // <--- ДОБАВИЛИ ИМПОРТ
 
 import { useAppAuth } from '../../app-auth';
 
@@ -63,6 +63,8 @@ export default function KanbanBoard({
   const [error, setError] = useState('');
   const [createTaskOpened, setCreateTaskOpened] = useState(false);
   const [createUserOpened, setCreateUserOpened] = useState(false);
+  const [donateOpened, setDonateOpened] = useState(false); // <--- ДОБАВИЛИ СОСТОЯНИЕ
+  
   const [selectedTask, setSelectedTask] = useState<{
     taskId: number;
     teamId: number | null;
@@ -291,6 +293,7 @@ export default function KanbanBoard({
         canCreateTask={canCreateTask}
         onCreateTaskClick={() => setCreateTaskOpened(true)}
         onCreateUserClick={() => setCreateUserOpened(true)}
+        onDonateClick={() => setDonateOpened(true)} // <--- ДОБАВИЛИ ПРОП
       />
 
       <Grid gutter="md" align="stretch">
@@ -344,6 +347,13 @@ export default function KanbanBoard({
         onClose={() => setSelectedTask(null)}
         onTaskChanged={reloadBoard}
         onTaskArchived={handleTaskArchived}
+      />
+
+      {/* ДОБАВИЛИ ВЫЗОВ МОДАЛКИ */}
+      <DonateModal 
+        opened={donateOpened} 
+        onClose={() => setDonateOpened(false)} 
+        tasks={tasks} 
       />
     </Box>
   );
